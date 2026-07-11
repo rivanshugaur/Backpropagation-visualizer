@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backpropagation Visualizer — Watch It Learn</title>
+<meta name="description" content="An interactive, from-scratch backpropagation visualizer. Watch a neural network learn, step by step, with the real math.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #090b10;
+    --bg-panel: #12151d;
+    --bg-panel-2: #161a24;
+    --border: #232838;
+    --border-strong: #333c52;
+    --text: #edf0f5;
+    --text-dim: #8991a3;
+    --text-faint: #565f74;
+    --cyan: #5eead4;
+    --cyan-dim: #2e6f66;
+    --amber: #fb923c;
+    --amber-dim: #7a4a20;
+    --rose: #fb7185;
+    --green: #34d399;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(255,255,255,0.045) 1px, transparent 0) 0 0/28px 28px,
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    padding: 40px 20px 70px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 14px;
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 32px;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+    line-height: 1.15;
+  }
+  .sub {
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 620px;
+    margin: 0 0 32px;
+  }
+  .sub code {
+    font-family: var(--font-mono);
+    background: var(--bg-panel-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 13px;
+    color: var(--cyan);
+  }
+
+  .scope-frame {
+    position: relative;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 24px 20px;
+    margin-bottom: 20px;
+  }
+  .corner {
+    position: absolute;
+    width: 18px; height: 18px;
+    border-color: var(--cyan-dim);
+    opacity: 0.9;
+  }
+  .corner.tl { top: -1px; left: -1px; border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); border-top-left-radius: 10px; }
+  .corner.tr { top: -1px; right: -1px; border-top: 2px solid var(--cyan); border-right: 2px solid var(--cyan); border-top-right-radius: 10px; }
+  .corner.bl { bottom: -1px; left: -1px; border-bottom: 2px solid var(--cyan); border-left: 2px solid var(--cyan); border-bottom-left-radius: 10px; }
+  .corner.br { bottom: -1px; right: -1px; border-bottom: 2px solid var(--cyan); border-right: 2px solid var(--cyan); border-bottom-right-radius: 10px; }
+
+  .scope-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .scope-label .live {
+    color: var(--amber);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .scope-label .live .r {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--amber);
+  }
+
+  svg { width: 100%; height: auto; display: block; }
+  .node-label { font-size: 12px; fill: var(--text-faint); font-family: var(--font-mono); }
+  .node-value { font-size: 13px; fill: var(--text); font-weight: 600; font-family: var(--font-mono); }
+  .edge-label { font-size: 10px; fill: var(--text-faint); font-family: var(--font-mono); }
+  .node-active { filter: drop-shadow(0 0 12px currentColor); }
+  circle.node { transition: filter 0.3s; }
+  line.edge { transition: stroke 0.4s, stroke-width 0.4s; }
+  .dot { opacity: 0; filter: drop-shadow(0 0 9px currentColor) drop-shadow(0 0 3px currentColor); }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-dim);
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+    flex-wrap: wrap;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .swatch-line { width: 16px; height: 2.5px; border-radius: 2px; display: inline-block; }
+  .swatch-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  .pipeline {
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .pipeline-step {
+    flex: 1;
+    text-align: center;
+    padding: 10px 4px;
+    border-radius: 8px;
+    background: var(--bg-panel-2);
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 0.03em;
+    transition: all 0.3s;
+  }
+  .pipeline-step.done { color: var(--green); border-color: var(--green); background: rgba(52,211,153,0.06); }
+  .pipeline-step.active { color: var(--bg); background: var(--cyan); border-color: var(--cyan); font-weight: 600; }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  button {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: var(--font-body);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  button:hover { border-color: var(--cyan); color: var(--cyan); }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+  button.primary { background: var(--cyan); border-color: var(--cyan); color: #06211d; font-weight: 600; }
+  button.primary:hover { color: #06211d; filter: brightness(1.08); }
+  button.playing { background: var(--amber); border-color: var(--amber); color: #2b1204; }
+
+  .epoch-badge {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--text-dim);
+    background: var(--bg-panel-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+  }
+  .epoch-badge b { color: var(--cyan); }
+
+  .terminal {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin-bottom: 18px;
+  }
+  .term-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .term-dots { display: flex; gap: 6px; }
+  .term-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--border-strong); display: block; }
+  .term-title {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    letter-spacing: 0.04em;
+  }
+  .step-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 17px;
+    margin: 0 0 12px;
+    color: var(--text);
+  }
+  .step-title span { color: var(--cyan); }
+  .info-body {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.95;
+    white-space: pre-wrap;
+    color: var(--text-dim);
+  }
+  .stat-row {
+    display: flex;
+    gap: 26px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+    flex-wrap: wrap;
+  }
+  .stat { font-size: 12.5px; color: var(--text-faint); font-family: var(--font-mono); }
+  .stat b { color: var(--text); font-size: 14px; }
+  .stat.loss b { color: var(--amber); }
+
+  .log-panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 22px;
+  }
+  .log-panel .term-title { margin-bottom: 12px; }
+  #lossLog {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    max-height: 110px;
+    overflow-y: auto;
+  }
+  #lossLog div {
+    padding: 5px 0;
+    border-bottom: 1px dashed var(--border);
+    display: flex;
+    justify-content: space-between;
+  }
+  #lossLog .val { color: var(--green); }
+
+  @media (max-width: 560px) {
+    h1 { font-size: 25px; }
+    .pipeline-step { font-size: 9px; padding: 8px 2px; }
+    .stat-row { gap: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow"><span class="dot"></span>interactive · runs entirely in your browser</div>
+  <h1>Backpropagation Visualizer</h1>
+  <p class="sub">A tiny neural network trained live with hand-derived backpropagation — no autograd. Step through it to watch the math happen.</p>
+
+  <div class="scope-frame">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+    <div class="scope-label">
+      <span>NETWORK / SIGNAL TRACE</span>
+      <span class="live"><i class="r"></i>LIVE</span>
+    </div>
+    <svg viewBox="0 0 700 420" id="svgRoot">
+      <defs>
+        <radialGradient id="nodeGrad" cx="35%" cy="30%" r="75%">
+          <stop offset="0%" stop-color="#1f2532"/>
+          <stop offset="100%" stop-color="#12151d"/>
+        </radialGradient>
+      </defs>
+      <line class="edge" id="e-x1h1" x1="90" y1="140" x2="340" y2="100" stroke="#3a4155" stroke-width="1.5"/>
+      <line class="edge" id="e-x1h2" x1="90" y1="140" x2="340" y2="320" stroke="#3a4155" stroke-width="1.5"/>
+      <line class="edge" id="e-x2h1" x1="90" y1="280" x2="340" y2="100" stroke="#3a4155" stroke-width="1.5"/>
+      <line class="edge" id="e-x2h2" x1="90" y1="280" x2="340" y2="320" stroke="#3a4155" stroke-width="1.5"/>
+      <line class="edge" id="e-h1y"  x1="360" y1="100" x2="600" y2="210" stroke="#3a4155" stroke-width="1.5"/>
+      <line class="edge" id="e-h2y"  x1="360" y1="320" x2="600" y2="210" stroke="#3a4155" stroke-width="1.5"/>
+
+      <text class="edge-label" id="lbl-x1h1" x="200" y="110"></text>
+      <text class="edge-label" id="lbl-x1h2" x="200" y="240"></text>
+      <text class="edge-label" id="lbl-x2h1" x="200" y="180"></text>
+      <text class="edge-label" id="lbl-x2h2" x="200" y="310"></text>
+      <text class="edge-label" id="lbl-h1y"  x="460" y="140"></text>
+      <text class="edge-label" id="lbl-h2y"  x="460" y="280"></text>
+
+      <circle class="node" id="n-x1" cx="90" cy="140" r="26" fill="url(#nodeGrad)" stroke="#3a4155" stroke-width="1.5"/>
+      <circle class="node" id="n-x2" cx="90" cy="280" r="26" fill="url(#nodeGrad)" stroke="#3a4155" stroke-width="1.5"/>
+      <circle class="node" id="n-h1" cx="350" cy="100" r="26" fill="url(#nodeGrad)" stroke="#3a4155" stroke-width="1.5"/>
+      <circle class="node" id="n-h2" cx="350" cy="320" r="26" fill="url(#nodeGrad)" stroke="#3a4155" stroke-width="1.5"/>
+      <circle class="node" id="n-y"  cx="620" cy="210" r="28" fill="url(#nodeGrad)" stroke="#3a4155" stroke-width="1.5"/>
+
+      <text class="node-label" x="90" y="105" text-anchor="middle">x1</text>
+      <text class="node-label" x="90" y="245" text-anchor="middle">x2</text>
+      <text class="node-label" x="350" y="65" text-anchor="middle">h1 · tanh</text>
+      <text class="node-label" x="350" y="285" text-anchor="middle">h2 · tanh</text>
+      <text class="node-label" x="620" y="170" text-anchor="middle">ŷ · sigmoid</text>
+
+      <text class="node-value" id="v-x1" x="90" y="146" text-anchor="middle"></text>
+      <text class="node-value" id="v-x2" x="90" y="286" text-anchor="middle"></text>
+      <text class="node-value" id="v-h1" x="350" y="106" text-anchor="middle"></text>
+      <text class="node-value" id="v-h2" x="350" y="326" text-anchor="middle"></text>
+      <text class="node-value" id="v-y"  x="620" y="216" text-anchor="middle"></text>
+
+      <text class="node-label" id="lossText" x="620" y="258" text-anchor="middle" fill="#fb923c" font-weight="600" font-size="13" font-family="JetBrains Mono, monospace"></text>
+
+      <circle class="dot" id="dot-x1h1" r="5" fill="#5eead4"/>
+      <circle class="dot" id="dot-x1h2" r="5" fill="#5eead4"/>
+      <circle class="dot" id="dot-x2h1" r="5" fill="#5eead4"/>
+      <circle class="dot" id="dot-x2h2" r="5" fill="#5eead4"/>
+      <circle class="dot" id="dot-h1y"  r="5" fill="#5eead4"/>
+      <circle class="dot" id="dot-h2y"  r="5" fill="#5eead4"/>
+    </svg>
+    <div class="legend">
+      <span><i class="swatch-line" style="background:#5eead4"></i>forward · data flowing</span>
+      <span><i class="swatch-line" style="background:#fb923c"></i>backward · gradient flowing</span>
+      <span><i class="swatch-dot" style="background:#5eead4"></i>positive weight</span>
+      <span><i class="swatch-dot" style="background:#fb7185"></i>negative weight</span>
+    </div>
+  </div>
+
+  <div class="pipeline" id="pipeline">
+    <div class="pipeline-step" data-i="0">init</div>
+    <div class="pipeline-step" data-i="1">forward</div>
+    <div class="pipeline-step" data-i="2">loss</div>
+    <div class="pipeline-step" data-i="3">backward</div>
+    <div class="pipeline-step" data-i="4">update</div>
+  </div>
+  <div id="stepTrack" style="display:none"></div>
+
+  <div class="controls">
+    <button class="primary" id="btnNext">Next step →</button>
+    <button id="btnPlay">Auto-play</button>
+    <button id="btnReset">Reset</button>
+    <div class="epoch-badge">epoch <b id="statEpoch">1</b></div>
+  </div>
+
+  <div class="terminal">
+    <div class="term-head">
+      <div class="term-dots"><i></i><i></i><i></i></div>
+      <div class="term-title">backprop.log</div>
+    </div>
+    <p class="step-title" id="stepTitle">Step <span>1 / 5</span> — Initialize weights</p>
+    <div class="info-body" id="stepBody"></div>
+    <div class="stat-row">
+      <span class="stat">learning rate<br><b>0.5</b></span>
+      <span class="stat loss">loss<br><b id="statLoss">—</b></span>
+    </div>
+  </div>
+
+  <div class="log-panel">
+    <div class="term-title">loss per epoch</div>
+    <div id="lossLog"><div>Train through a few epochs to see loss trend downward here.</div></div>
+  </div>
+</div>
+
+<script>
+const x1 = 0.6, x2 = 0.9, yTrue = 1;
+const lr = 0.5;
+
+let w = { x1h1: 0.35, x1h2: -0.20, x2h1: 0.10, x2h2: 0.40, bh1: 0.05, bh2: -0.10,
+          h1y: 0.50, h2y: -0.30, by: 0.05 };
+
+let epoch = 1;
+let phase = 0;
+let cache = {};
+let lossHistory = [];
+
+const phaseNames = ["Initialize weights", "Forward pass", "Compute loss", "Backward pass (chain rule)", "Update weights"];
+
+function tanh(z) { return Math.tanh(z); }
+function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
+
+function forward() {
+  const zh1 = x1*w.x1h1 + x2*w.x2h1 + w.bh1;
+  const ah1 = tanh(zh1);
+  const zh2 = x1*w.x1h2 + x2*w.x2h2 + w.bh2;
+  const ah2 = tanh(zh2);
+  const zy  = ah1*w.h1y + ah2*w.h2y + w.by;
+  const ay  = sigmoid(zy);
+  cache = { zh1, ah1, zh2, ah2, zy, ay };
+}
+
+function loss() {
+  const eps = 1e-8;
+  const ay = Math.min(Math.max(cache.ay, eps), 1-eps);
+  cache.loss = -(yTrue*Math.log(ay) + (1-yTrue)*Math.log(1-ay));
+}
+
+function backward() {
+  const dZy = cache.ay - yTrue;
+  const dWh1y = cache.ah1 * dZy;
+  const dWh2y = cache.ah2 * dZy;
+  const dBy = dZy;
+  const dAh1 = dZy * w.h1y;
+  const dAh2 = dZy * w.h2y;
+  const dZh1 = dAh1 * (1 - cache.ah1*cache.ah1);
+  const dZh2 = dAh2 * (1 - cache.ah2*cache.ah2);
+  const dWx1h1 = x1*dZh1, dWx2h1 = x2*dZh1, dBh1 = dZh1;
+  const dWx1h2 = x1*dZh2, dWx2h2 = x2*dZh2, dBh2 = dZh2;
+  cache.grads = { dWh1y, dWh2y, dBy, dWx1h1, dWx2h1, dBh1, dWx1h2, dWx2h2, dBh2 };
+}
+
+function update() {
+  const g = cache.grads;
+  w.h1y -= lr*g.dWh1y; w.h2y -= lr*g.dWh2y; w.by -= lr*g.dBy;
+  w.x1h1 -= lr*g.dWx1h1; w.x2h1 -= lr*g.dWx2h1; w.bh1 -= lr*g.dBh1;
+  w.x1h2 -= lr*g.dWx1h2; w.x2h2 -= lr*g.dWx2h2; w.bh2 -= lr*g.dBh2;
+}
+
+function f(n) { return n.toFixed(3); }
+
+function edgeColor(val) { return val >= 0 ? "#5eead4" : "#fb7185"; }
+function edgeWidth(val) { return Math.min(6, 1 + Math.abs(val)*4); }
+
+function drawWeights() {
+  const map = { "e-x1h1": w.x1h1, "e-x1h2": w.x1h2, "e-x2h1": w.x2h1, "e-x2h2": w.x2h2, "e-h1y": w.h1y, "e-h2y": w.h2y };
+  for (const [id, val] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    el.setAttribute("stroke", edgeColor(val));
+    el.setAttribute("stroke-width", edgeWidth(val));
+    document.getElementById("lbl-" + id.slice(2)).textContent = f(val);
+  }
+}
+
+function clearNodeValues() {
+  ["v-x1","v-x2","v-h1","v-h2","v-y"].forEach(id => document.getElementById(id).textContent = "");
+  document.getElementById("lossText").textContent = "";
+}
+
+function highlightNodes(ids) {
+  document.querySelectorAll("circle.node").forEach(n => n.classList.remove("node-active"));
+  ids.forEach(id => document.getElementById(id).classList.add("node-active"));
+}
+
+function pulseDot(dotId, x1_, y1_, x2_, y2_, color, duration) {
+  return new Promise(resolve => {
+    const dot = document.getElementById(dotId);
+    dot.setAttribute("fill", color);
+    dot.setAttribute("cx", x1_);
+    dot.setAttribute("cy", y1_);
+    dot.style.opacity = 1;
+    dot.style.transition = `cx ${duration}ms linear, cy ${duration}ms linear`;
+    requestAnimationFrame(() => {
+      dot.setAttribute("cx", x2_);
+      dot.setAttribute("cy", y2_);
+    });
+    setTimeout(() => { dot.style.opacity = 0; resolve(); }, duration + 60);
+  });
+}
+
+const edgeCoords = {
+  x1h1: [90,140,340,100], x1h2: [90,140,340,320],
+  x2h1: [90,280,340,100], x2h2: [90,280,340,320],
+  h1y:  [360,100,600,210], h2y:  [360,320,600,210]
+};
+
+async function animateForward() {
+  const d = 700;
+  await Promise.all([
+    pulseDot("dot-x1h1", ...edgeCoords.x1h1, "#5eead4", d),
+    pulseDot("dot-x1h2", ...edgeCoords.x1h2, "#5eead4", d),
+    pulseDot("dot-x2h1", ...edgeCoords.x2h1, "#5eead4", d),
+    pulseDot("dot-x2h2", ...edgeCoords.x2h2, "#5eead4", d),
+  ]);
+  await Promise.all([
+    pulseDot("dot-h1y", ...edgeCoords.h1y, "#5eead4", d),
+    pulseDot("dot-h2y", ...edgeCoords.h2y, "#5eead4", d),
+  ]);
+}
+
+async function animateBackward() {
+  const d = 700;
+  const rev = (c) => [c[2], c[3], c[0], c[1]];
+  await Promise.all([
+    pulseDot("dot-h1y", ...rev(edgeCoords.h1y), "#fb923c", d),
+    pulseDot("dot-h2y", ...rev(edgeCoords.h2y), "#fb923c", d),
+  ]);
+  await Promise.all([
+    pulseDot("dot-x1h1", ...rev(edgeCoords.x1h1), "#fb923c", d),
+    pulseDot("dot-x1h2", ...rev(edgeCoords.x1h2), "#fb923c", d),
+    pulseDot("dot-x2h1", ...rev(edgeCoords.x2h1), "#fb923c", d),
+    pulseDot("dot-x2h2", ...rev(edgeCoords.x2h2), "#fb923c", d),
+  ]);
+}
+
+function renderStepTrack() {
+  document.querySelectorAll(".pipeline-step").forEach(el => {
+    const i = parseInt(el.getAttribute("data-i"), 10);
+    el.classList.remove("done", "active");
+    if (i < phase) el.classList.add("done");
+    else if (i === phase) el.classList.add("active");
+  });
+}
+
+async function renderPhase() {
+  document.getElementById("btnNext").disabled = true;
+  renderStepTrack();
+  document.getElementById("stepTitle").innerHTML = "Step <span>" + (phase+1) + " / 5</span> — " + phaseNames[phase] + " <span style='color:#565f74;font-weight:500;font-size:13px'>(epoch " + epoch + ")</span>";
+  document.getElementById("statEpoch").textContent = epoch;
+
+  if (phase === 0) {
+    clearNodeValues();
+    highlightNodes([]);
+    drawWeights();
+    document.getElementById("stepBody").textContent =
+"Weights set to small random values.  x1 = " + x1 + ", x2 = " + x2 + " → target y = " + yTrue;
+  }
+
+  if (phase === 1) {
+    forward();
+    highlightNodes(["n-x1","n-x2"]);
+    document.getElementById("v-x1").textContent = x1;
+    document.getElementById("v-x2").textContent = x2;
+    await animateForward();
+    highlightNodes(["n-h1","n-h2","n-y"]);
+    document.getElementById("v-h1").textContent = f(cache.ah1);
+    document.getElementById("v-h2").textContent = f(cache.ah2);
+    document.getElementById("v-y").textContent = f(cache.ay);
+    document.getElementById("stepBody").textContent =
+"h1 = tanh(" + f(cache.zh1) + ") = " + f(cache.ah1) + "   h2 = tanh(" + f(cache.zh2) + ") = " + f(cache.ah2) + "   ŷ = sigmoid(" + f(cache.zy) + ") = " + f(cache.ay);
+  }
+
+  if (phase === 2) {
+    loss();
+    document.getElementById("lossText").textContent = "loss = " + f(cache.loss);
+    document.getElementById("statLoss").textContent = f(cache.loss);
+    document.getElementById("stepBody").textContent =
+"Binary cross-entropy loss = " + f(cache.loss) + "   — this is what backprop will now reduce.";
+  }
+
+  if (phase === 3) {
+    backward();
+    highlightNodes(["n-y"]);
+    await animateBackward();
+    highlightNodes(["n-x1","n-x2","n-h1","n-h2"]);
+    const g = cache.grads;
+    document.getElementById("stepBody").textContent =
+"Gradients (chain rule):  dW_h1y = " + f(g.dWh1y) + "   dW_h2y = " + f(g.dWh2y) + "   dW_x1h1 = " + f(g.dWx1h1) + "   dW_x2h2 = " + f(g.dWx2h2);
+  }
+
+  if (phase === 4) {
+    update();
+    drawWeights();
+    highlightNodes([]);
+    lossHistory.push(cache.loss);
+    const log = document.getElementById("lossLog");
+    if (lossHistory.length === 1) log.innerHTML = "";
+    const row = document.createElement("div");
+    row.innerHTML = "<span>epoch " + epoch + "</span><span class='val'>" + f(cache.loss) + "</span>";
+    log.prepend(row);
+    document.getElementById("stepBody").textContent =
+"Weights updated:  θ ← θ − lr·∇θ.  Loss this epoch: " + f(cache.loss) + " — click Next to start epoch " + (epoch+1) + ".";
+  }
+
+  document.getElementById("btnNext").disabled = false;
+}
+
+document.getElementById("btnNext").addEventListener("click", () => {
+  phase++;
+  if (phase > 4) { phase = 1; epoch++; }
+  renderPhase();
+});
+
+let playing = false;
+let playTimer = null;
+document.getElementById("btnPlay").addEventListener("click", (e) => {
+  playing = !playing;
+  e.target.textContent = playing ? "Pause" : "Auto-play";
+  e.target.classList.toggle("playing", playing);
+  if (playing) {
+    playTimer = setInterval(() => {
+      phase++;
+      if (phase > 4) { phase = 1; epoch++; }
+      renderPhase();
+    }, 1600);
+  } else {
+    clearInterval(playTimer);
+  }
+});
+
+document.getElementById("btnReset").addEventListener("click", () => {
+  w = { x1h1: 0.35, x1h2: -0.20, x2h1: 0.10, x2h2: 0.40, bh1: 0.05, bh2: -0.10,
+        h1y: 0.50, h2y: -0.30, by: 0.05 };
+  epoch = 1; phase = 0; lossHistory = [];
+  document.getElementById("lossLog").innerHTML = "<div>Train through a few epochs to see loss trend downward here.</div>";
+  document.getElementById("statLoss").textContent = "—";
+  playing = false;
+  clearInterval(playTimer);
+  document.getElementById("btnPlay").textContent = "Auto-play";
+  document.getElementById("btnPlay").classList.remove("playing");
+  renderPhase();
+});
+
+renderPhase();
+</script>
+</body>
+</html>
