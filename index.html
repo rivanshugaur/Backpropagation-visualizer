@@ -3,25 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Backpropagation Visualizer</title>
-<meta name="description" content="An interactive, easy-to-understand backpropagation visualizer. Watch a neural network learn from scratch with intuitive visuals and real-time training.">
+<title>Backpropagation Visualizer — Interactive Neural Network Playground</title>
+<meta name="description" content="An interactive, visual, and intuitive neural network & backpropagation visualizer. Watch neural networks learn in real time with 60 FPS decision boundaries and animated step-by-step signal flows.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #090b10;
-    --bg-panel: #11141c;
-    --bg-card: #161b26;
-    --border: #222838;
-    --border-focus: #38bdf8;
-    --text: #edf2f7;
+    --bg-base: #07090e;
+    --bg-panel: #0d111a;
+    --bg-card: #131824;
+    --bg-card-hover: #192030;
+    --border: #1f2738;
+    --border-accent: #2e3a52;
+    --text-main: #f1f5f9;
     --text-dim: #94a3b8;
     --text-faint: #64748b;
     --cyan: #38bdf8;
+    --cyan-glow: rgba(56, 189, 248, 0.35);
+    --emerald: #34d399;
+    --emerald-glow: rgba(52, 211, 153, 0.3);
     --amber: #fbbf24;
+    --amber-glow: rgba(251, 191, 36, 0.3);
     --rose: #f43f5e;
-    --green: #34d399;
+    --purple: #a855f7;
     --font-heading: 'Space Grotesk', -apple-system, sans-serif;
     --font-body: 'Inter', -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
@@ -30,70 +35,76 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background:
-      radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.04) 0%, transparent 40%),
-      radial-gradient(circle at 90% 80%, rgba(251, 191, 36, 0.03) 0%, transparent 40%),
-      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.03) 1px, transparent 0) 0 0/28px 28px,
-      var(--bg);
-    color: var(--text);
+      radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(168, 85, 247, 0.04) 0%, transparent 40%),
+      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.035) 1px, transparent 0) 0 0/28px 28px,
+      var(--bg-base);
+    color: var(--text-main);
     font-family: var(--font-body);
     padding: 24px 20px 60px;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 1040px; margin: 0 auto; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
 
   /* Header */
-  header { margin-bottom: 24px; }
-  .eyebrow {
-    display: inline-flex;
+  header {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--cyan);
-    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
   }
-  .eyebrow .dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--cyan);
-    box-shadow: 0 0 8px var(--cyan);
-    animation: pulse 1.8s ease-in-out infinite;
+  .brand-group { display: flex; align-items: center; gap: 14px; }
+  .brand-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0284c7, #38bdf8);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 16px var(--cyan-glow);
   }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-
+  .brand-icon svg { width: 24px; height: 24px; stroke: #04121e; }
   h1 {
     font-family: var(--font-heading);
+    font-size: 26px;
     font-weight: 700;
-    font-size: 32px;
     letter-spacing: -0.02em;
-    color: var(--text);
-    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
-  .sub {
+  .tag {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: var(--cyan);
+  }
+  .sub-tagline {
+    font-size: 13.5px;
     color: var(--text-dim);
-    font-size: 15px;
-    line-height: 1.5;
-    max-width: 700px;
+    margin-top: 2px;
   }
 
-  /* Main Navigation Tabs */
+  /* Navigation Tabs */
   .nav-tabs {
     display: flex;
     gap: 6px;
     background: var(--bg-panel);
-    padding: 5px;
+    padding: 4px;
     border-radius: 12px;
     border: 1px solid var(--border);
-    margin-bottom: 24px;
-    width: fit-content;
   }
-  .tab-btn {
+  .nav-tab-btn {
     background: transparent;
     border: none;
     color: var(--text-dim);
     font-family: var(--font-heading);
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 600;
     padding: 9px 18px;
     border-radius: 8px;
@@ -103,55 +114,72 @@
     align-items: center;
     gap: 8px;
   }
-  .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
-  .tab-btn.active {
+  .nav-tab-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.03); }
+  .nav-tab-btn.active {
     background: var(--cyan);
     color: #04121e;
-    box-shadow: 0 2px 12px rgba(56, 189, 248, 0.35);
+    box-shadow: 0 2px 14px var(--cyan-glow);
   }
 
-  .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
 
   /* Grid Layouts */
-  .grid-explore {
+  .grid-layout {
     display: grid;
-    grid-template-columns: 290px 1fr;
-    gap: 20px;
+    grid-template-columns: 310px 1fr 300px;
+    gap: 18px;
+    align-items: start;
   }
-  @media (max-width: 860px) {
-    .grid-explore { grid-template-columns: 1fr; }
+  @media (max-width: 1120px) {
+    .grid-layout { grid-template-columns: 290px 1fr; }
+    .col-right { grid-column: span 2; }
+  }
+  @media (max-width: 780px) {
+    .grid-layout { grid-template-columns: 1fr; }
+    .col-right { grid-column: span 1; }
   }
 
-  /* Panels & Cards */
+  /* Panels */
   .panel {
     background: var(--bg-panel);
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    position: relative;
+  }
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
   }
   .panel-title {
     font-family: var(--font-heading);
-    font-size: 15px;
+    font-size: 14.5px;
     font-weight: 700;
-    margin-bottom: 16px;
-    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-main);
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
   /* Form Controls */
-  .field { margin-bottom: 16px; }
-  .field label {
+  .field { margin-bottom: 14px; }
+  .field-label {
     display: flex;
     justify-content: space-between;
-    font-size: 12px;
+    font-size: 11.5px;
     font-family: var(--font-mono);
     color: var(--text-dim);
     margin-bottom: 6px;
   }
-  .field label span:last-child {
+  .field-label span:last-child {
     color: var(--cyan);
     font-weight: 600;
   }
@@ -160,8 +188,8 @@
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    color: var(--text);
-    padding: 9px 12px;
+    color: var(--text-main);
+    padding: 8px 12px;
     font-family: var(--font-mono);
     font-size: 13px;
     outline: none;
@@ -179,109 +207,139 @@
     width: 16px; height: 16px; border-radius: 50%;
     background: var(--cyan);
     cursor: pointer;
-    box-shadow: 0 0 8px var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
   }
 
   /* Buttons */
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
   button.btn {
-    width: 100%;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-size: 13.5px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 7px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-accent);
+    background: var(--bg-card);
+    color: var(--text-main);
+    transition: all 0.15s;
   }
-  button.btn:hover { border-color: var(--cyan); color: var(--cyan); }
-  button.btn:active { transform: scale(0.98); }
+  button.btn:hover { border-color: var(--cyan); color: var(--cyan); background: var(--bg-card-hover); }
+  button.btn:active { transform: scale(0.97); }
   button.btn-primary {
-    background: var(--cyan);
-    border-color: var(--cyan);
+    background: linear-gradient(135deg, #0284c7, #38bdf8);
+    border: 1px solid #38bdf8;
     color: #04121e;
+    font-weight: 700;
+    box-shadow: 0 2px 14px var(--cyan-glow);
   }
   button.btn-primary:hover { filter: brightness(1.1); color: #04121e; }
   button.btn-playing { background: var(--amber); border-color: var(--amber); color: #201004; }
 
-  /* Visualization Views */
-  .viz-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
-  }
-  @media (max-width: 680px) {
-    .viz-row { grid-template-columns: 1fr; }
-  }
-
+  /* Canvas Visualizer */
   .canvas-box {
-    background: #080a0f;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-height: 440px;
+    background: #080a10;
     border-radius: 12px;
     border: 1px solid var(--border);
     overflow: hidden;
-    position: relative;
-    aspect-ratio: 1/1;
-    max-height: 380px;
     margin: 0 auto;
+    cursor: crosshair;
   }
   canvas#decisionCanvas { width: 100%; height: 100%; display: block; }
+  .canvas-probe-hud {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(13, 17, 26, 0.88);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+  .canvas-probe-hud span { color: var(--cyan); font-weight: 600; }
+  .canvas-legend {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 12px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-dim);
+  }
+  .canvas-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot-legend { width: 9px; height: 9px; border-radius: 50%; }
 
+  /* Real-time stats & graphs */
   .stat-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 14px 16px;
+    padding: 13px 15px;
     margin-bottom: 12px;
   }
-  .stat-row {
+  .stat-header {
     display: flex;
     justify-content: space-between;
+    align-items: baseline;
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 11.5px;
     margin-bottom: 6px;
   }
-  .stat-row .v { font-weight: 700; color: var(--text); }
-  .chart-svg { width: 100%; height: 70px; display: block; overflow: visible; }
+  .stat-title { color: var(--text-faint); text-transform: uppercase; }
+  .stat-value { font-size: 16px; font-weight: 700; color: var(--text-main); }
+  .svg-chart { width: 100%; height: 60px; display: block; overflow: visible; }
 
   /* Scrubber */
-  .scrubber-card {
+  .scrubber-panel {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 14px 16px;
-    margin-top: 16px;
+    margin-top: 14px;
   }
 
   /* Animated Walkthrough View */
   .scope-frame {
-    position: relative;
     background: var(--bg-panel);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 24px 20px 16px;
+    padding: 24px 20px 18px;
     margin-bottom: 16px;
+    position: relative;
   }
   svg#animSvg { width: 100%; height: auto; display: block; }
   .node-label { font-size: 12px; fill: var(--text-faint); font-family: var(--font-mono); }
-  .node-value { font-size: 13px; fill: var(--text); font-weight: 600; font-family: var(--font-mono); }
-  .edge-label { font-size: 10px; fill: var(--text-faint); font-family: var(--font-mono); }
-  .dot { opacity: 0; filter: drop-shadow(0 0 6px currentColor); }
+  .node-value { font-size: 13px; fill: var(--text-main); font-weight: 600; font-family: var(--font-mono); }
+  .edge-label { font-size: 10.5px; fill: var(--text-faint); font-family: var(--font-mono); }
+  .anim-dot { opacity: 0; filter: drop-shadow(0 0 6px currentColor); }
 
-  .pipeline {
-    display: flex;
+  /* Educational Story Cards */
+  .story-pipeline {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     gap: 6px;
     margin-bottom: 14px;
   }
-  .pipeline-step {
-    flex: 1;
+  .story-step {
     text-align: center;
-    padding: 9px 4px;
+    padding: 10px 4px;
     border-radius: 8px;
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -289,39 +347,53 @@
     font-size: 11px;
     color: var(--text-faint);
     transition: all 0.25s;
+    cursor: pointer;
   }
-  .pipeline-step.active {
+  .story-step.active {
     background: var(--cyan);
     border-color: var(--cyan);
     color: #04121e;
     font-weight: 700;
+    box-shadow: 0 0 12px var(--cyan-glow);
   }
-  .pipeline-step.done {
-    color: var(--green);
+  .story-step.done {
+    color: var(--emerald);
     border-color: rgba(52, 211, 153, 0.4);
     background: rgba(52, 211, 153, 0.08);
   }
 
-  .step-box {
+  .story-box {
     background: var(--bg-card);
     border: 1px solid var(--border);
+    border-left: 4px solid var(--cyan);
     border-radius: 12px;
-    padding: 16px 20px;
+    padding: 18px 22px;
     margin-bottom: 16px;
   }
-  .step-title {
+  .story-title {
     font-family: var(--font-heading);
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 700;
     margin-bottom: 6px;
-    color: var(--text);
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
-  .step-title span { color: var(--cyan); }
-  .step-body {
-    font-family: var(--font-mono);
-    font-size: 12.5px;
+  .story-body {
+    font-size: 14px;
     color: var(--text-dim);
-    line-height: 1.6;
+    line-height: 1.65;
+  }
+  .story-math-preview {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 10px;
+    color: var(--cyan);
   }
 
   .anim-controls {
@@ -330,164 +402,199 @@
     flex-wrap: wrap;
     align-items: center;
   }
-  .anim-controls button { width: auto; padding: 9px 18px; }
-  .epoch-badge {
+  .anim-controls button { width: auto; padding: 10px 20px; }
+  .epoch-pill {
     margin-left: auto;
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 12.5px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 6px 14px;
+    padding: 6px 16px;
     color: var(--text-dim);
   }
-  .epoch-badge b { color: var(--cyan); }
-
-  .legend {
-    display: flex;
-    gap: 18px;
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    color: var(--text-dim);
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px dashed var(--border);
-    flex-wrap: wrap;
-  }
-  .legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .swatch { width: 12px; height: 3px; border-radius: 2px; }
+  .epoch-pill b { color: var(--cyan); }
 </style>
 </head>
 <body>
 
 <div class="wrap">
+  <!-- Header -->
   <header>
-    <div class="eyebrow"><span class="dot"></span>Pure NumPy Logic · Zero Autograd</div>
-    <h1>Backpropagation Visualizer</h1>
-    <p class="sub">
-      A neural network trained with hand-derived backpropagation. Scrub through training epoch-by-epoch or watch the math happen step-by-step.
-    </p>
+    <div class="brand-group">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M3 12h3m12 0h3M12 3v3m0 12v3"></path>
+          <path d="M5.6 5.6l2.1 2.1m8.6 8.6l2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6l2.1-2.1"></path>
+        </svg>
+      </div>
+      <div>
+        <h1>
+          Backpropagation Visualizer
+          <span class="tag">Zero Autograd</span>
+        </h1>
+        <p class="sub-tagline">Watch neural networks learn in real time — intuitive, visual, and hand-derived.</p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="nav-tab-btn active" onclick="switchTab('playground')">
+        🎮 Interactive Playground
+      </button>
+      <button class="nav-tab-btn" onclick="switchTab('walkthrough')">
+        🎬 Watch It Learn (Step-by-Step)
+      </button>
+    </div>
   </header>
 
-  <!-- Navigation Tabs -->
-  <div class="nav-tabs">
-    <button class="tab-btn active" onclick="setTab('explore')">
-      📊 Explore Trained Model
-    </button>
-    <button class="tab-btn" onclick="setTab('animated')">
-      🎬 Watch It Learn (Animated)
-    </button>
-  </div>
-
   <!-- ========================================================================= -->
-  <!-- TAB 1: EXPLORE TRAINED MODEL -->
+  <!-- TAB 1: INTERACTIVE PLAYGROUND -->
   <!-- ========================================================================= -->
-  <div id="tab-explore" class="tab-panel active">
-    <div class="grid-explore">
+  <div id="tab-playground" class="tab-content active">
+    <div class="grid-layout">
 
-      <!-- Left Controls -->
+      <!-- Left Column: Controls -->
       <div class="panel">
-        <div class="panel-title">⚙️ Configuration</div>
+        <div class="panel-header">
+          <div class="panel-title">⚙️ Architecture &amp; Data</div>
+        </div>
 
         <div class="field">
-          <label>Dataset</label>
+          <div class="field-label"><span>Dataset Topology</span></div>
           <select id="selDataset" onchange="resetAndTrain()">
-            <option value="moons">Two Moons</option>
-            <option value="circles">Concentric Circles</option>
-            <option value="blobs">Blobs (2-class)</option>
+            <option value="moons">🌙 Two Moons (Interlocking)</option>
+            <option value="circles">🔘 Concentric Circles</option>
+            <option value="xor">✖️ XOR Problem (4 Quadrants)</option>
+            <option value="spirals">🌀 Two Spirals (Challenging)</option>
+            <option value="blobs">🫧 Gaussian Blobs</option>
+            <option value="ring">🎯 Donut &amp; Ring</option>
           </select>
         </div>
 
         <div class="field">
-          <label><span>Noise</span><span id="lblNoise">0.15</span></label>
-          <input type="range" id="rngNoise" min="0.0" max="0.4" step="0.05" value="0.15" oninput="updateLabel('lblNoise', this.value)" onchange="resetAndTrain()">
-        </div>
-
-        <div class="field">
-          <label><span>Hidden Layer Size</span><span id="lblHidden">8</span></label>
-          <input type="range" id="rngHidden" min="2" max="16" step="1" value="8" oninput="updateLabel('lblHidden', this.value)" onchange="resetAndTrain()">
-        </div>
-
-        <div class="field">
-          <label>Activation Function</label>
+          <div class="field-label"><span>Activation Function</span></div>
           <select id="selAct" onchange="resetAndTrain()">
-            <option value="tanh">tanh</option>
-            <option value="relu">relu</option>
+            <option value="tanh">Tanh: smooth [-1, 1], zero-centered</option>
+            <option value="relu">ReLU: fast, standard max(0, z)</option>
+            <option value="leaky_relu">Leaky ReLU: fixes dying neurons</option>
+            <option value="sigmoid">Sigmoid: classic probability (0, 1)</option>
+            <option value="elu">ELU: exponential linear unit</option>
           </select>
         </div>
 
         <div class="field">
-          <label><span>Learning Rate</span><span id="lblLr">0.20</span></label>
-          <input type="range" id="rngLr" min="0.01" max="1.0" step="0.01" value="0.20" oninput="updateLabel('lblLr', this.value)" onchange="resetAndTrain()">
+          <div class="field-label">
+            <span>Hidden Layer Units</span>
+            <span id="lblHidden">8</span>
+          </div>
+          <input type="range" id="rngHidden" min="2" max="16" step="1" value="8" oninput="document.getElementById('lblHidden').textContent=this.value" onchange="resetAndTrain()">
         </div>
 
         <div class="field">
-          <label><span>Epochs to Train</span><span id="lblEpochs">150</span></label>
-          <input type="range" id="rngEpochs" min="20" max="300" step="10" value="150" oninput="updateLabel('lblEpochs', this.value)" onchange="resetAndTrain()">
+          <div class="field-label">
+            <span>Learning Rate (η)</span>
+            <span id="lblLr">0.15</span>
+          </div>
+          <input type="range" id="rngLr" min="0.01" max="1.0" step="0.01" value="0.15" oninput="document.getElementById('lblLr').textContent=parseFloat(this.value).toFixed(2)" onchange="resetAndTrain()">
         </div>
 
-        <button class="btn btn-primary" onclick="resetAndTrain()">
-          🚀 Retrain Network
-        </button>
+        <div class="field">
+          <div class="field-label">
+            <span>Noise</span>
+            <span id="lblNoise">0.15</span>
+          </div>
+          <input type="range" id="rngNoise" min="0.0" max="0.4" step="0.05" value="0.15" oninput="document.getElementById('lblNoise').textContent=parseFloat(this.value).toFixed(2)" onchange="resetAndTrain()">
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <span>Epochs to Train</span>
+            <span id="lblEpochs">160</span>
+          </div>
+          <input type="range" id="rngEpochs" min="20" max="300" step="10" value="160" oninput="document.getElementById('lblEpochs').textContent=this.value" onchange="resetAndTrain()">
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnLiveTrain" onclick="toggleLiveTrain()">
+            ▶ Live Train
+          </button>
+          <button class="btn" onclick="resetAndTrain()">
+            🔄 Reset
+          </button>
+        </div>
       </div>
 
-      <!-- Right Visuals -->
-      <div>
-        <div class="viz-row">
-          <!-- Decision Boundary -->
-          <div class="panel">
-            <div class="panel-title" id="titleBoundary">Decision Boundary (Epoch 0)</div>
-            <div class="canvas-box">
-              <canvas id="decisionCanvas" width="380" height="380"></canvas>
-            </div>
-            <div class="legend" style="justify-content:center;">
-              <span><span class="swatch" style="background:#38bdf8; height:8px; width:8px; border-radius:50%;"></span>Class 0</span>
-              <span><span class="swatch" style="background:#f43f5e; height:8px; width:8px; border-radius:50%;"></span>Class 1</span>
-              <span><span class="swatch" style="background:#ffffff; height:2px; width:14px;"></span>Decision Threshold (P = 0.5)</span>
-            </div>
-          </div>
+      <!-- Center Column: Real-time 2D Decision Boundary -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title" id="titleBoundary">Decision Boundary (Epoch 0)</div>
+          <span style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-faint);">
+            Hover/click canvas to probe
+          </span>
+        </div>
 
-          <!-- Training Curves -->
-          <div class="panel">
-            <div class="panel-title">Training Dynamics</div>
-
-            <div class="stat-card">
-              <div class="stat-row">
-                <span>Binary Cross-Entropy Loss</span>
-                <span class="v" id="lblLossVal" style="color:var(--amber);">0.6931</span>
-              </div>
-              <svg class="chart-svg" id="svgLoss"></svg>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-row">
-                <span>Layer 1 Gradient Norm (‖dW1‖)</span>
-                <span class="v" id="lblGradW1" style="color:var(--cyan);">0.000</span>
-              </div>
-              <div style="height:6px; background:#1e2433; border-radius:3px; overflow:hidden; margin-top:6px;">
-                <div id="barGradW1" style="height:100%; width:0%; background:var(--cyan); transition: width 0.15s;"></div>
-              </div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-row">
-                <span>Layer 2 Gradient Norm (‖dW2‖)</span>
-                <span class="v" id="lblGradW2" style="color:var(--rose);">0.000</span>
-              </div>
-              <div style="height:6px; background:#1e2433; border-radius:3px; overflow:hidden; margin-top:6px;">
-                <div id="barGradW2" style="height:100%; width:0%; background:var(--rose); transition: width 0.15s;"></div>
-              </div>
-            </div>
+        <div class="canvas-box">
+          <canvas id="decisionCanvas" width="440" height="440"></canvas>
+          <div class="canvas-probe-hud" id="probeHud">
+            Probe: <span>Move cursor over map</span>
           </div>
         </div>
 
-        <!-- Epoch Scrubber Slider -->
-        <div class="scrubber-card">
-          <div class="stat-row">
-            <span>Scrub to Epoch</span>
-            <span class="v" id="lblScrubEpoch">0 / 150</span>
+        <div class="canvas-legend">
+          <span><span class="dot-legend" style="background:#38bdf8;"></span>Class 0</span>
+          <span><span class="dot-legend" style="background:#f43f5e;"></span>Class 1</span>
+          <span><span style="background:#ffffff; height:2px; width:14px; display:inline-block; border-radius:1px;"></span>Decision Threshold (P = 0.5)</span>
+        </div>
+
+        <!-- Epoch Scrubber -->
+        <div class="scrubber-panel">
+          <div class="field-label">
+            <span>Scrub Training Timeline</span>
+            <span id="lblScrubVal" style="color:var(--cyan); font-weight:700;">Epoch 0 / 160</span>
           </div>
-          <input type="range" id="rngScrub" min="0" max="150" value="0" style="margin-top:6px;" oninput="onScrub(parseInt(this.value, 10))">
+          <input type="range" id="rngScrub" min="0" max="160" value="0" style="margin-top:6px;" oninput="onScrub(parseInt(this.value, 10))">
+        </div>
+      </div>
+
+      <!-- Right Column: Live Training Analytics -->
+      <div class="panel col-right">
+        <div class="panel-header">
+          <div class="panel-title">📊 Live Dynamics</div>
+          <span class="tag" id="tagAccuracy">Accuracy: 50.0%</span>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">Binary Cross-Entropy Loss</span>
+            <span class="stat-value" id="valLoss" style="color:var(--amber);">0.6931</span>
+          </div>
+          <svg class="svg-chart" id="svgLoss"></svg>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">Layer 1 Gradient Norm (‖dW1‖)</span>
+            <span class="stat-value" id="valGradW1" style="color:var(--cyan); font-size:14px;">0.000</span>
+          </div>
+          <div style="height:6px; background:#1b2233; border-radius:3px; overflow:hidden; margin-top:8px;">
+            <div id="barGradW1" style="height:100%; width:0%; background:var(--cyan); transition: width 0.15s;"></div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-title">Layer 2 Gradient Norm (‖dW2‖)</span>
+            <span class="stat-value" id="valGradW2" style="color:var(--purple); font-size:14px;">0.000</span>
+          </div>
+          <div style="height:6px; background:#1b2233; border-radius:3px; overflow:hidden; margin-top:8px;">
+            <div id="barGradW2" style="height:100%; width:0%; background:var(--purple); transition: width 0.15s;"></div>
+          </div>
+        </div>
+
+        <div style="font-size:12px; color:var(--text-faint); line-height:1.6; padding-top:8px;">
+          💡 <b>Tip:</b> If earlier layer gradients (‖dW1‖) drop to zero while Layer 2 is active, you are witnessing the <i>Vanishing Gradient Problem</i> in action!
         </div>
       </div>
 
@@ -498,151 +605,182 @@
   <!-- ========================================================================= -->
   <!-- TAB 2: WATCH IT LEARN (ANIMATED STEP-BY-STEP) -->
   <!-- ========================================================================= -->
-  <div id="tab-animated" class="tab-panel">
+  <div id="tab-walkthrough" class="tab-content">
     <div class="scope-frame">
-      <svg viewBox="0 0 700 400" id="animSvg">
+      <svg viewBox="0 0 700 390" id="animSvg">
         <defs>
           <radialGradient id="nodeGrad" cx="35%" cy="30%" r="75%">
-            <stop offset="0%" stop-color="#1e2433"/>
-            <stop offset="100%" stop-color="#11141c"/>
+            <stop offset="0%" stop-color="#1c2333"/>
+            <stop offset="100%" stop-color="#0f131c"/>
           </radialGradient>
         </defs>
 
         <!-- Connections -->
-        <line class="edge" id="e-x1h1" x1="90" y1="130" x2="340" y2="90" stroke="#333c52" stroke-width="2"/>
-        <line class="edge" id="e-x1h2" x1="90" y1="130" x2="340" y2="300" stroke="#333c52" stroke-width="2"/>
-        <line class="edge" id="e-x2h1" x1="90" y1="270" x2="340" y2="90" stroke="#333c52" stroke-width="2"/>
-        <line class="edge" id="e-x2h2" x1="90" y1="270" x2="340" y2="300" stroke="#333c52" stroke-width="2"/>
-        <line class="edge" id="e-h1y"  x1="360" y1="90" x2="600" y2="195" stroke="#333c52" stroke-width="2"/>
-        <line class="edge" id="e-h2y"  x1="360" y1="300" x2="600" y2="195" stroke="#333c52" stroke-width="2"/>
+        <line class="edge" id="e-x1h1" x1="90" y1="125" x2="340" y2="85" stroke="#333c52" stroke-width="2"/>
+        <line class="edge" id="e-x1h2" x1="90" y1="125" x2="340" y2="295" stroke="#333c52" stroke-width="2"/>
+        <line class="edge" id="e-x2h1" x1="90" y1="265" x2="340" y2="85" stroke="#333c52" stroke-width="2"/>
+        <line class="edge" id="e-x2h2" x1="90" y1="265" x2="340" y2="295" stroke="#333c52" stroke-width="2"/>
+        <line class="edge" id="e-h1y"  x1="360" y1="85" x2="600" y2="190" stroke="#333c52" stroke-width="2"/>
+        <line class="edge" id="e-h2y"  x1="360" y1="295" x2="600" y2="190" stroke="#333c52" stroke-width="2"/>
 
-        <text class="edge-label" id="lbl-x1h1" x="200" y="100"></text>
-        <text class="edge-label" id="lbl-x1h2" x="200" y="225"></text>
-        <text class="edge-label" id="lbl-x2h1" x="200" y="170"></text>
-        <text class="edge-label" id="lbl-x2h2" x="200" y="295"></text>
-        <text class="edge-label" id="lbl-h1y"  x="465" y="130"></text>
-        <text class="edge-label" id="lbl-h2y"  x="465" y="265"></text>
+        <text class="edge-label" id="lbl-x1h1" x="200" y="95"></text>
+        <text class="edge-label" id="lbl-x1h2" x="200" y="220"></text>
+        <text class="edge-label" id="lbl-x2h1" x="200" y="165"></text>
+        <text class="edge-label" id="lbl-x2h2" x="200" y="290"></text>
+        <text class="edge-label" id="lbl-h1y"  x="465" y="125"></text>
+        <text class="edge-label" id="lbl-h2y"  x="465" y="260"></text>
 
-        <!-- Nodes -->
-        <circle class="node" id="n-x1" cx="90" cy="130" r="26" fill="url(#nodeGrad)" stroke="#38bdf8" stroke-width="2"/>
-        <circle class="node" id="n-x2" cx="90" cy="270" r="26" fill="url(#nodeGrad)" stroke="#38bdf8" stroke-width="2"/>
-        <circle class="node" id="n-h1" cx="350" cy="90" r="26" fill="url(#nodeGrad)" stroke="#34d399" stroke-width="2"/>
-        <circle class="node" id="n-h2" cx="350" cy="300" r="26" fill="url(#nodeGrad)" stroke="#34d399" stroke-width="2"/>
-        <circle class="node" id="n-y"  cx="610" cy="195" r="28" fill="url(#nodeGrad)" stroke="#fbbf24" stroke-width="2"/>
+        <!-- Neurons -->
+        <circle class="node" id="n-x1" cx="90" cy="125" r="26" fill="url(#nodeGrad)" stroke="#38bdf8" stroke-width="2"/>
+        <circle class="node" id="n-x2" cx="90" cy="265" r="26" fill="url(#nodeGrad)" stroke="#38bdf8" stroke-width="2"/>
+        <circle class="node" id="n-h1" cx="350" cy="85" r="26" fill="url(#nodeGrad)" stroke="#34d399" stroke-width="2"/>
+        <circle class="node" id="n-h2" cx="350" cy="295" r="26" fill="url(#nodeGrad)" stroke="#34d399" stroke-width="2"/>
+        <circle class="node" id="n-y"  cx="610" cy="190" r="28" fill="url(#nodeGrad)" stroke="#fbbf24" stroke-width="2"/>
 
-        <text class="node-label" x="90" y="95" text-anchor="middle">x1</text>
-        <text class="node-label" x="90" y="235" text-anchor="middle">x2</text>
-        <text class="node-label" x="350" y="55" text-anchor="middle">h1 (tanh)</text>
-        <text class="node-label" x="350" y="265" text-anchor="middle">h2 (tanh)</text>
-        <text class="node-label" x="610" y="155" text-anchor="middle">ŷ (sigmoid)</text>
+        <text class="node-label" x="90" y="90" text-anchor="middle">Input x1</text>
+        <text class="node-label" x="90" y="230" text-anchor="middle">Input x2</text>
+        <text class="node-label" x="350" y="50" text-anchor="middle">Hidden h1</text>
+        <text class="node-label" x="350" y="260" text-anchor="middle">Hidden h2</text>
+        <text class="node-label" x="610" y="150" text-anchor="middle">Prediction ŷ</text>
 
-        <text class="node-value" id="v-x1" x="90" y="135" text-anchor="middle"></text>
-        <text class="node-value" id="v-x2" x="90" y="275" text-anchor="middle"></text>
-        <text class="node-value" id="v-h1" x="350" y="95" text-anchor="middle"></text>
-        <text class="node-value" id="v-h2" x="350" y="305" text-anchor="middle"></text>
-        <text class="node-value" id="v-y"  x="610" y="201" text-anchor="middle"></text>
+        <text class="node-value" id="v-x1" x="90" y="130" text-anchor="middle"></text>
+        <text class="node-value" id="v-x2" x="90" y="270" text-anchor="middle"></text>
+        <text class="node-value" id="v-h1" x="350" y="90" text-anchor="middle"></text>
+        <text class="node-value" id="v-h2" x="350" y="300" text-anchor="middle"></text>
+        <text class="node-value" id="v-y"  x="610" y="196" text-anchor="middle"></text>
 
-        <text class="node-label" id="lossText" x="610" y="248" text-anchor="middle" fill="#fbbf24" font-weight="600" font-size="12" font-family="JetBrains Mono, monospace"></text>
+        <text class="node-label" id="lossText" x="610" y="242" text-anchor="middle" fill="#fbbf24" font-weight="600" font-size="12" font-family="JetBrains Mono, monospace"></text>
 
-        <!-- Signal Animation Dots -->
-        <circle class="dot" id="dot-x1h1" r="5" fill="#38bdf8"/>
-        <circle class="dot" id="dot-x1h2" r="5" fill="#38bdf8"/>
-        <circle class="dot" id="dot-x2h1" r="5" fill="#38bdf8"/>
-        <circle class="dot" id="dot-x2h2" r="5" fill="#38bdf8"/>
-        <circle class="dot" id="dot-h1y"  r="5" fill="#38bdf8"/>
-        <circle class="dot" id="dot-h2y"  r="5" fill="#38bdf8"/>
+        <!-- Signal Dots -->
+        <circle class="anim-dot" id="dot-x1h1" r="5" fill="#38bdf8"/>
+        <circle class="anim-dot" id="dot-x1h2" r="5" fill="#38bdf8"/>
+        <circle class="anim-dot" id="dot-x2h1" r="5" fill="#38bdf8"/>
+        <circle class="anim-dot" id="dot-x2h2" r="5" fill="#38bdf8"/>
+        <circle class="anim-dot" id="dot-h1y"  r="5" fill="#38bdf8"/>
+        <circle class="anim-dot" id="dot-h2y"  r="5" fill="#38bdf8"/>
       </svg>
 
-      <div class="legend">
-        <span><span class="swatch" style="background:#38bdf8;"></span>Forward Pass (Data)</span>
-        <span><span class="swatch" style="background:#fbbf24;"></span>Backward Pass (Gradients)</span>
-        <span><span class="swatch" style="background:#38bdf8; height:8px; width:8px; border-radius:50%;"></span>Positive Weight</span>
-        <span><span class="swatch" style="background:#f43f5e; height:8px; width:8px; border-radius:50%;"></span>Negative Weight</span>
+      <div class="canvas-legend">
+        <span><span class="dot-legend" style="background:#38bdf8;"></span>Forward Flow (Data)</span>
+        <span><span class="dot-legend" style="background:#fbbf24;"></span>Backward Flow (Gradients)</span>
+        <span><span class="dot-legend" style="background:#38bdf8; border:1px solid #fff;"></span>Positive Weight (Amplifier)</span>
+        <span><span class="dot-legend" style="background:#f43f5e; border:1px solid #fff;"></span>Negative Weight (Inverter)</span>
       </div>
     </div>
 
-    <!-- Pipeline steps -->
-    <div class="pipeline">
-      <div class="pipeline-step" id="pipe-0">1. Init</div>
-      <div class="pipeline-step" id="pipe-1">2. Forward</div>
-      <div class="pipeline-step" id="pipe-2">3. Loss</div>
-      <div class="pipeline-step" id="pipe-3">4. Backward</div>
-      <div class="pipeline-step" id="pipe-4">5. Update</div>
+    <!-- Intuitive 5-Step Progress Bar -->
+    <div class="story-pipeline">
+      <div class="story-step" id="step-0" onclick="gotoStep(0)">1. Inputs &amp; Knobs</div>
+      <div class="story-step" id="step-1" onclick="gotoStep(1)">2. Hidden Activation</div>
+      <div class="story-step" id="step-2" onclick="gotoStep(2)">3. Loss (Penalty)</div>
+      <div class="story-step" id="step-3" onclick="gotoStep(3)">4. Blame (Chain Rule)</div>
+      <div class="story-step" id="step-4" onclick="gotoStep(4)">5. Nudge (Update)</div>
     </div>
 
-    <!-- Explanation Box -->
-    <div class="step-box">
-      <div class="step-title" id="animStepTitle">Step 1 / 5 — Initialize Weights</div>
-      <div class="step-body" id="animStepBody">Weights set to small random values. Click "Next Step" to send an example through.</div>
+    <!-- Intuitive Explanation Box -->
+    <div class="story-box">
+      <div class="story-title" id="storyTitle">Step 1 of 5 — Inputs &amp; Volume Knobs (Weights)</div>
+      <div class="story-body" id="storyBody">
+        Think of weights as volume knobs: positive weights amplify signals, negative weights flip them. Here, weights are initialized to small random values so neurons start by making random guesses.
+      </div>
+      <div class="story-math-preview" id="storyMath">
+        Example: x1 = 0.60, x2 = 0.90 → Target Class y = 1
+      </div>
     </div>
 
     <!-- Stepper Controls -->
     <div class="anim-controls">
-      <button class="btn btn-primary" id="btnNextStep" onclick="nextAnimStep()">Next Step →</button>
-      <button class="btn" id="btnAutoPlay" onclick="toggleAutoPlay()">Auto-Play</button>
-      <button class="btn" onclick="resetAnim()">Reset</button>
-      <div class="epoch-badge">Epoch: <b id="lblAnimEpoch">1</b></div>
+      <button class="btn btn-primary" id="btnNext" onclick="nextStep()">Next Step →</button>
+      <button class="btn" id="btnAuto" onclick="toggleAuto()">Auto-Play</button>
+      <button class="btn" onclick="resetWalkthrough()">Reset</button>
+      <div class="epoch-pill">Training Loop: Epoch <b id="lblWalkEpoch">1</b></div>
     </div>
   </div>
 
 </div>
 
 <!-- ========================================================================= -->
-<!-- JAVASCRIPT LOGIC (CLEAN, MODULAR, NO EXTERNAL DEPENDENCIES) -->
+<!-- JAVASCRIPT: FAST, CLEAN, ZERO EXTERNAL DEPENDENCY -->
 <!-- ========================================================================= -->
 <script>
-// --- Navigation ---
-function setTab(tabName) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+// --- Tab Switching ---
+function switchTab(tabId) {
+  document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-  if (tabName === 'explore') {
-    document.querySelectorAll('.tab-btn')[0].classList.add('active');
-    document.getElementById('tab-explore').classList.add('active');
+  if (tabId === 'playground') {
+    document.querySelectorAll('.nav-tab-btn')[0].classList.add('active');
+    document.getElementById('tab-playground').classList.add('active');
   } else {
-    document.querySelectorAll('.tab-btn')[1].classList.add('active');
-    document.getElementById('tab-animated').classList.add('active');
+    document.querySelectorAll('.nav-tab-btn')[1].classList.add('active');
+    document.getElementById('tab-walkthrough').classList.add('active');
   }
 }
 
-function updateLabel(id, val) {
-  document.getElementById(id).textContent = val;
-}
-
 // =========================================================================
-// TAB 1: TRAIN & EXPLORE LOGIC
+// TAB 1: DATASETS & PLAYGROUND ENGINE
 // =========================================================================
-let trainingHistory = null;
-let currentDataset = null;
+let X_data = [], y_data = [];
+let trainHistory = null;
+let isLiveTraining = false;
+let liveTrainAnim = null;
 
-function makeDataset(name, noise) {
+function createDataset(type, noise = 0.15, count = 240) {
   const X = [];
   const y = [];
-  const n = 220;
-  const half = Math.floor(n / 2);
+  const half = Math.floor(count / 2);
 
-  if (name === "moons") {
+  if (type === "moons") {
     for (let i = 0; i < half; i++) {
-      const theta = Math.PI * (i / half);
-      X.push([Math.cos(theta) + (Math.random() - 0.5) * noise * 2, Math.sin(theta) + (Math.random() - 0.5) * noise * 2]);
+      const th = Math.PI * (i / half);
+      X.push([Math.cos(th) + (Math.random() - 0.5) * noise * 2, Math.sin(th) + (Math.random() - 0.5) * noise * 2]);
       y.push(0);
     }
     for (let i = 0; i < half; i++) {
-      const theta = Math.PI * (i / half);
-      X.push([1 - Math.cos(theta) + (Math.random() - 0.5) * noise * 2, 1 - Math.sin(theta) - 0.5 + (Math.random() - 0.5) * noise * 2]);
+      const th = Math.PI * (i / half);
+      X.push([1 - Math.cos(th) + (Math.random() - 0.5) * noise * 2, 1 - Math.sin(th) - 0.5 + (Math.random() - 0.5) * noise * 2]);
       y.push(1);
     }
-  } else if (name === "circles") {
+  } else if (type === "circles") {
     for (let i = 0; i < half; i++) {
-      const theta = 2 * Math.PI * (i / half);
+      const th = 2 * Math.PI * (i / half);
       const r = 0.45 + (Math.random() - 0.5) * noise;
-      X.push([r * Math.cos(theta), r * Math.sin(theta)]);
+      X.push([r * Math.cos(th), r * Math.sin(th)]);
       y.push(0);
     }
     for (let i = 0; i < half; i++) {
-      const theta = 2 * Math.PI * (i / half);
+      const th = 2 * Math.PI * (i / half);
       const r = 0.95 + (Math.random() - 0.5) * noise;
-      X.push([r * Math.cos(theta), r * Math.sin(theta)]);
+      X.push([r * Math.cos(th), r * Math.sin(th)]);
+      y.push(1);
+    }
+  } else if (type === "xor") {
+    for (let i = 0; i < count; i++) {
+      const x1 = (Math.random() * 2 - 1) * 1.1;
+      const x2 = (Math.random() * 2 - 1) * 1.1;
+      X.push([x1 + (Math.random() - 0.5) * noise, x2 + (Math.random() - 0.5) * noise]);
+      y.push((x1 * x2 > 0) ? 1 : 0);
+    }
+  } else if (type === "spirals") {
+    for (let i = 0; i < half; i++) {
+      const r = (i / half) * 1.05;
+      const t = 1.75 * i / half * 2 * Math.PI;
+      X.push([r * Math.sin(t) + (Math.random() - 0.5) * noise, r * Math.cos(t) + (Math.random() - 0.5) * noise]);
+      y.push(0);
+      X.push([-r * Math.sin(t) + (Math.random() - 0.5) * noise, -r * Math.cos(t) + (Math.random() - 0.5) * noise]);
+      y.push(1);
+    }
+  } else if (type === "ring") {
+    for (let i = 0; i < half; i++) {
+      const th = 2 * Math.PI * (i / half);
+      const r = 0.25 + (Math.random() - 0.5) * noise * 0.5;
+      X.push([r * Math.cos(th), r * Math.sin(th)]);
+      y.push(0);
+    }
+    for (let i = 0; i < half; i++) {
+      const th = 2 * Math.PI * (i / half);
+      const r = 0.85 + (Math.random() - 0.5) * noise;
+      X.push([r * Math.cos(th), r * Math.sin(th)]);
       y.push(1);
     }
   } else {
@@ -650,8 +788,6 @@ function makeDataset(name, noise) {
     for (let i = 0; i < half; i++) {
       X.push([-0.65 + (Math.random() - 0.5) * (0.6 + noise * 2), -0.65 + (Math.random() - 0.5) * (0.6 + noise * 2)]);
       y.push(0);
-    }
-    for (let i = 0; i < half; i++) {
       X.push([0.65 + (Math.random() - 0.5) * (0.6 + noise * 2), 0.65 + (Math.random() - 0.5) * (0.6 + noise * 2)]);
       y.push(1);
     }
@@ -672,17 +808,27 @@ function makeDataset(name, noise) {
   return { X, y };
 }
 
-function trainFullModel(X, y, hiddenDim, actName, lr, epochs) {
-  // Xavier Init
-  const std1 = Math.sqrt(1.0 / 2);
-  const std2 = Math.sqrt(1.0 / hiddenDim);
+// Activation Functions & Derivatives
+const Acts = {
+  tanh: { f: z => Math.tanh(z), d: a => 1 - a * a },
+  relu: { f: z => Math.max(0, z), d: a => a > 0 ? 1 : 0 },
+  leaky_relu: { f: z => z > 0 ? z : 0.01 * z, d: a => a > 0 ? 1 : 0.01 },
+  sigmoid: { f: z => 1 / (1 + Math.exp(-Math.max(-500, Math.min(500, z)))), d: a => a * (1 - a) },
+  elu: { f: z => z > 0 ? z : 1.0 * (Math.exp(Math.max(-500, Math.min(50, z))) - 1), d: a => a > 0 ? 1 : a + 1.0 }
+};
 
-  let W1 = [];
-  for (let i = 0; i < 2; i++) {
-    W1[i] = [];
-    for (let j = 0; j < hiddenDim; j++) {
-      W1[i][j] = (Math.random() * 2 - 1) * std1;
-    }
+function trainNetworkHistory(X, y, hiddenDim, actKey, lr, epochs) {
+  const act = Acts[actKey].f;
+  const actD = Acts[actKey].d;
+  const sigmoid = (z) => 1.0 / (1.0 + Math.exp(-Math.max(-500, Math.min(500, z))));
+
+  const std1 = Math.sqrt(2.0 / 2);
+  const std2 = Math.sqrt(2.0 / hiddenDim);
+
+  let W1 = [[], []];
+  for (let j = 0; j < hiddenDim; j++) {
+    W1[0][j] = (Math.random() * 2 - 1) * std1;
+    W1[1][j] = (Math.random() * 2 - 1) * std1;
   }
   let b1 = new Array(hiddenDim).fill(0.0);
 
@@ -692,22 +838,19 @@ function trainFullModel(X, y, hiddenDim, actName, lr, epochs) {
   }
   let b2 = 0.0;
 
-  const act = actName === "relu" ? (z => Math.max(0, z)) : (z => Math.tanh(z));
-  const actD = actName === "relu" ? (a => (a > 0 ? 1 : 0)) : (a => (1 - a*a));
-  const sigmoid = (z) => 1.0 / (1.0 + Math.exp(-Math.max(-500, Math.min(500, z))));
-
+  const N = X.length;
   const history = {
     loss: [],
+    accuracy: [],
     W1: [], b1: [], W2: [], b2: [],
     gradW1: [], gradW2: []
   };
 
-  const N = X.length;
-
   for (let ep = 0; ep < epochs; ep++) {
-    // 1. Forward
+    // Forward
     const z1List = [], a1List = [], a2List = [];
     let epLoss = 0.0;
+    let correct = 0;
 
     for (let i = 0; i < N; i++) {
       const x1 = X[i][0], x2 = X[i][1];
@@ -727,10 +870,11 @@ function trainFullModel(X, y, hiddenDim, actName, lr, epochs) {
       const eps = 1e-12;
       const p = Math.max(eps, Math.min(1 - eps, a2));
       epLoss += -(y[i] * Math.log(p) + (1 - y[i]) * Math.log(1 - p));
+      if ((a2 >= 0.5 ? 1 : 0) === y[i]) correct++;
     }
     epLoss /= N;
 
-    // 2. Backward
+    // Backward (Exact Chain Rule)
     const dW1 = [[], []];
     for (let j = 0; j < hiddenDim; j++) { dW1[0][j] = 0; dW1[1][j] = 0; }
     const db1 = new Array(hiddenDim).fill(0);
@@ -739,12 +883,10 @@ function trainFullModel(X, y, hiddenDim, actName, lr, epochs) {
     let db2 = 0;
 
     for (let i = 0; i < N; i++) {
-      const a2 = a2List[i];
-      const a1 = a1List[i];
-      const yTrue = y[i];
-      const x1 = X[i][0], x2 = X[i][1];
+      const a2 = a2List[i], a1 = a1List[i];
+      const yTrue = y[i], x1 = X[i][0], x2 = X[i][1];
 
-      const dZ2 = (a2 - yTrue) / N;
+      const dZ2 = (a2 - yTrue) / N; // cancellation proof
       for (let j = 0; j < hiddenDim; j++) {
         dW2[j][0] += a1[j] * dZ2;
       }
@@ -768,14 +910,15 @@ function trainFullModel(X, y, hiddenDim, actName, lr, epochs) {
 
     // Record snapshot
     history.loss.push(epLoss);
-    history.W1.push(W1.map(row => [...row]));
+    history.accuracy.push(correct / N);
+    history.W1.push(W1.map(r => [...r]));
     history.b1.push([...b1]);
-    history.W2.push(W2.map(row => [...row]));
+    history.W2.push(W2.map(r => [...r]));
     history.b2.push(b2);
     history.gradW1.push(Math.sqrt(norm1));
     history.gradW2.push(Math.sqrt(norm2));
 
-    // 3. Update
+    // Update (Gradient Descent)
     for (let j = 0; j < hiddenDim; j++) {
       W1[0][j] -= lr * dW1[0][j];
       W1[1][j] -= lr * dW1[1][j];
@@ -789,6 +932,8 @@ function trainFullModel(X, y, hiddenDim, actName, lr, epochs) {
 }
 
 function resetAndTrain() {
+  if (isLiveTraining) toggleLiveTrain();
+
   const dName = document.getElementById("selDataset").value;
   const noise = parseFloat(document.getElementById("rngNoise").value);
   const hidden = parseInt(document.getElementById("rngHidden").value, 10);
@@ -796,8 +941,11 @@ function resetAndTrain() {
   const lr = parseFloat(document.getElementById("rngLr").value);
   const epochs = parseInt(document.getElementById("rngEpochs").value, 10);
 
-  currentDataset = makeDataset(dName, noise);
-  trainingHistory = trainFullModel(currentDataset.X, currentDataset.y, hidden, act, lr, epochs);
+  const ds = createDataset(dName, noise);
+  X_data = ds.X;
+  y_data = ds.y;
+
+  trainHistory = trainNetworkHistory(X_data, y_data, hidden, act, lr, epochs);
 
   const scrubber = document.getElementById("rngScrub");
   scrubber.max = epochs - 1;
@@ -807,70 +955,72 @@ function resetAndTrain() {
 }
 
 function onScrub(epoch) {
-  if (!trainingHistory || !currentDataset) return;
-  const total = trainingHistory.loss.length;
+  if (!trainHistory) return;
+  const total = trainHistory.loss.length;
   epoch = Math.max(0, Math.min(total - 1, epoch));
 
-  document.getElementById("lblScrubEpoch").textContent = `Epoch ${epoch} / ${total - 1}`;
+  document.getElementById("lblScrubVal").textContent = `Epoch ${epoch} / ${total - 1}`;
   document.getElementById("titleBoundary").textContent = `Decision Boundary (Epoch ${epoch})`;
-  document.getElementById("lblLossVal").textContent = trainingHistory.loss[epoch].toFixed(4);
+  document.getElementById("valLoss").textContent = trainHistory.loss[epoch].toFixed(4);
+  document.getElementById("tagAccuracy").textContent = `Accuracy: ${(trainHistory.accuracy[epoch] * 100).toFixed(1)}%`;
 
-  const g1 = trainingHistory.gradW1[epoch];
-  const g2 = trainingHistory.gradW2[epoch];
-  document.getElementById("lblGradW1").textContent = g1.toFixed(4);
-  document.getElementById("lblGradW2").textContent = g2.toFixed(4);
+  const g1 = trainHistory.gradW1[epoch];
+  const g2 = trainHistory.gradW2[epoch];
+  document.getElementById("valGradW1").textContent = g1.toFixed(4);
+  document.getElementById("valGradW2").textContent = g2.toFixed(4);
 
   const maxG = Math.max(0.01, g1, g2);
   document.getElementById("barGradW1").style.width = Math.min(100, (g1 / maxG) * 100) + "%";
   document.getElementById("barGradW2").style.width = Math.min(100, (g2 / maxG) * 100) + "%";
 
-  renderLossChart(trainingHistory.loss, epoch);
-  renderDecisionBoundary(epoch);
+  renderLossSvg(trainHistory.loss, epoch);
+  renderBoundaryCanvas(epoch);
 }
 
-function renderLossChart(losses, currentEpoch) {
+function renderLossSvg(losses, currentEpoch) {
   const svg = document.getElementById("svgLoss");
-  const w = svg.clientWidth || 300;
-  const h = svg.clientHeight || 70;
+  const w = svg.clientWidth || 260;
+  const h = svg.clientHeight || 60;
 
   const minL = Math.min(...losses);
   const maxL = Math.max(...losses);
-  const range = (maxL - minL) || 1;
+  const rng = (maxL - minL) || 1;
 
   let pts = [];
   for (let i = 0; i < losses.length; i++) {
     const x = (i / (losses.length - 1)) * w;
-    const y = h - ((losses[i] - minL) / range) * (h - 14) - 7;
+    const y = h - ((losses[i] - minL) / rng) * (h - 12) - 6;
     pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
   }
 
   const curX = (currentEpoch / (losses.length - 1)) * w;
-  const curY = h - ((losses[currentEpoch] - minL) / range) * (h - 14) - 7;
+  const curY = h - ((losses[currentEpoch] - minL) / rng) * (h - 12) - 6;
 
   svg.innerHTML = `
-    <polyline fill="none" stroke="#38bdf8" stroke-width="2" points="${pts.join(' ')}" />
+    <polyline fill="none" stroke="#fbbf24" stroke-width="2" points="${pts.join(' ')}" />
     <line x1="${curX}" y1="0" x2="${curX}" y2="${h}" stroke="#f43f5e" stroke-dasharray="3,3" stroke-width="1.2" />
-    <circle cx="${curX}" cy="${curY}" r="4" fill="#f43f5e" />
+    <circle cx="${curX}" cy="${curY}" r="3.5" fill="#f43f5e" />
   `;
 }
 
-function renderDecisionBoundary(epoch) {
+function renderBoundaryCanvas(epoch) {
   const canvas = document.getElementById("decisionCanvas");
   const ctx = canvas.getContext("2d");
   const W = canvas.width;
   const H = canvas.height;
 
-  const W1 = trainingHistory.W1[epoch];
-  const b1 = trainingHistory.b1[epoch];
-  const W2 = trainingHistory.W2[epoch];
-  const b2 = trainingHistory.b2[epoch];
-  const act = document.getElementById("selAct").value === "relu" ? (z => Math.max(0, z)) : (z => Math.tanh(z));
+  const W1 = trainHistory.W1[epoch];
+  const b1 = trainHistory.b1[epoch];
+  const W2 = trainHistory.W2[epoch];
+  const b2 = trainHistory.b2[epoch];
+  const actKey = document.getElementById("selAct").value;
+  const act = Acts[actKey].f;
   const sigmoid = (z) => 1.0 / (1.0 + Math.exp(-Math.max(-500, Math.min(500, z))));
 
   const imgData = ctx.createImageData(W, H);
   const buf = imgData.data;
   const scale = 4.4;
-  const step = 4;
+  const step = 4; // 60 FPS block resolution
 
   for (let py = 0; py < H; py += step) {
     const yCoord = 2.2 - (py / H) * scale;
@@ -884,6 +1034,7 @@ function renderDecisionBoundary(epoch) {
       }
       const prob = sigmoid(z2);
 
+      // Cyan (#38bdf8: 56, 189, 248) to Rose (#f43f5e: 244, 63, 94)
       const r = Math.round(56 * (1 - prob) + 244 * prob);
       const g = Math.round(189 * (1 - prob) + 63 * prob);
       const b = Math.round(248 * (1 - prob) + 94 * prob);
@@ -894,32 +1045,85 @@ function renderDecisionBoundary(epoch) {
           buf[idx] = r;
           buf[idx + 1] = g;
           buf[idx + 2] = b;
-          buf[idx + 3] = 205;
+          buf[idx + 3] = 210;
         }
       }
     }
   }
   ctx.putImageData(imgData, 0, 0);
 
-  // Scatter training points
-  const X = currentDataset.X;
-  const y = currentDataset.y;
-  for (let i = 0; i < X.length; i++) {
-    const px = ((X[i][0] + 2.2) / scale) * W;
-    const py = ((2.2 - X[i][1]) / scale) * H;
+  // Scatter points
+  for (let i = 0; i < X_data.length; i++) {
+    const px = ((X_data[i][0] + 2.2) / scale) * W;
+    const py = ((2.2 - X_data[i][1]) / scale) * H;
 
     ctx.beginPath();
     ctx.arc(px, py, 4, 0, 2 * Math.PI);
-    ctx.fillStyle = y[i] === 1 ? "#f43f5e" : "#38bdf8";
+    ctx.fillStyle = y_data[i] === 1 ? "#f43f5e" : "#38bdf8";
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.2;
     ctx.fill();
     ctx.stroke();
   }
 }
 
+// Live Training Animation Loop
+function toggleLiveTrain() {
+  isLiveTraining = !isLiveTraining;
+  const btn = document.getElementById("btnLiveTrain");
+  if (isLiveTraining) {
+    btn.textContent = "⏸ Pause";
+    btn.classList.add("btn-playing");
+    let ep = 0;
+    const maxEp = trainHistory.loss.length;
+    function loop() {
+      if (!isLiveTraining) return;
+      onScrub(ep);
+      document.getElementById("rngScrub").value = ep;
+      ep = (ep + 2) % maxEp;
+      liveTrainAnim = requestAnimationFrame(loop);
+    }
+    liveTrainAnim = requestAnimationFrame(loop);
+  } else {
+    btn.textContent = "▶ Live Train";
+    btn.classList.remove("btn-playing");
+    if (liveTrainAnim) cancelAnimationFrame(liveTrainAnim);
+  }
+}
+
+// Canvas Hover Probe
+const canvas = document.getElementById("decisionCanvas");
+canvas.addEventListener("mousemove", (e) => {
+  if (!trainHistory) return;
+  const rect = canvas.getBoundingClientRect();
+  const px = e.clientX - rect.left;
+  const py = e.clientY - rect.top;
+  const scale = 4.4;
+  const x = -2.2 + (px / rect.width) * scale;
+  const y = 2.2 - (py / rect.height) * scale;
+
+  const curEpoch = parseInt(document.getElementById("rngScrub").value, 10);
+  const W1 = trainHistory.W1[curEpoch];
+  const b1 = trainHistory.b1[curEpoch];
+  const W2 = trainHistory.W2[curEpoch];
+  const b2 = trainHistory.b2[curEpoch];
+  const act = Acts[document.getElementById("selAct").value].f;
+  const sigmoid = (z) => 1.0 / (1.0 + Math.exp(-Math.max(-500, Math.min(500, z))));
+
+  let z2 = b2;
+  for (let j = 0; j < b1.length; j++) {
+    const z1 = x * W1[0][j] + y * W1[1][j] + b1[j];
+    z2 += act(z1) * W2[j][0];
+  }
+  const prob = sigmoid(z2);
+
+  document.getElementById("probeHud").innerHTML =
+    `Coordinates: (x₁=${x.toFixed(2)}, x₂=${y.toFixed(2)}) → P(Class 1)=<span>${(prob * 100).toFixed(1)}%</span>`;
+});
+
+
 // =========================================================================
-// TAB 2: ANIMATED STEPPER LOGIC
+// TAB 2: ANIMATED STEP-BY-STEP WALKTHROUGH
 // =========================================================================
 const animX1 = 0.6, animX2 = 0.9, animYTrue = 1;
 const animLr = 0.5;
@@ -927,20 +1131,40 @@ let animW = { x1h1: 0.35, x1h2: -0.20, x2h1: 0.10, x2h2: 0.40, bh1: 0.05, bh2: -
 let animEpoch = 1;
 let animPhase = 0;
 let animCache = {};
-let isAutoPlaying = false;
-let autoPlayTimer = null;
+let isAuto = false;
+let autoTimer = null;
 
-const stepNames = [
-  "Initialize weights",
-  "Forward pass",
-  "Compute loss",
-  "Backward pass (chain rule)",
-  "Update weights"
+const stories = [
+  {
+    title: "Step 1 of 5 — Inputs &amp; Volume Knobs (Weights)",
+    body: "Think of connection weights as <b>volume knobs</b>: positive knobs amplify the signal, negative knobs flip it. Because the network starts with random knobs, its initial guesses are completely random.",
+    math: `Input vector: [x1 = ${animX1}, x2 = ${animX2}] → Target Class: y = ${animYTrue}`
+  },
+  {
+    title: "Step 2 of 5 — Forward Pass &amp; Hidden Activation",
+    body: "Signals travel forward through the network. Hidden neurons take the weighted sum of inputs and pass it through a non-linear activation (Tanh). This allows the network to bend space and carve non-linear boundaries.",
+    math: `h1 = tanh(x1·w11 + x2·w21 + b1) | Output ŷ = sigmoid(h1·w1 + h2·w2 + b)`
+  },
+  {
+    title: "Step 3 of 5 — Loss (The Error Penalty)",
+    body: "We compare the network's prediction ŷ against the ground truth y = 1 using Binary Cross-Entropy Loss. The higher the loss, the worse the network performed on this example.",
+    math: `Loss = -[y · ln(ŷ) + (1-y) · ln(1-ŷ)] (0 = perfect prediction)`
+  },
+  {
+    title: "Step 4 of 5 — Backward Pass &amp; Blame Assignment (Chain Rule)",
+    body: "Here is the core of backpropagation! Starting from the output error, we walk backwards through the computation graph. Using the chain rule, we compute the partial derivative ∂L/∂w for every knob, answering: <i>'How much did this specific knob contribute to the error?'</i>",
+    math: `Output error δ = (ŷ - y) | Weight gradient ∂L/∂w = activation · δ`
+  },
+  {
+    title: "Step 5 of 5 — Nudge the Knobs (Weight Update)",
+    body: "The fix! We nudge each knob in the opposite direction of its blame: θ ← θ - η · ∇θ. If increasing a weight would increase the error, we decrease it. Over many iterations, the network learns the pattern!",
+    math: `w_new = w_old - (learning_rate × gradient)`
+  }
 ];
 
 function f(n) { return Number(n).toFixed(3); }
 
-function drawAnimWeights() {
+function drawGraphWeights() {
   const map = {
     "e-x1h1": animW.x1h1, "e-x1h2": animW.x1h2,
     "e-x2h1": animW.x2h1, "e-x2h2": animW.x2h2,
@@ -954,7 +1178,7 @@ function drawAnimWeights() {
   }
 }
 
-function pulse(dotId, x1, y1, x2, y2, color, ms = 500) {
+function pulseSignal(dotId, x1, y1, x2, y2, color, ms = 480) {
   return new Promise(resolve => {
     const dot = document.getElementById(dotId);
     dot.setAttribute("fill", color);
@@ -966,63 +1190,64 @@ function pulse(dotId, x1, y1, x2, y2, color, ms = 500) {
       dot.setAttribute("cx", x2);
       dot.setAttribute("cy", y2);
     });
-    setTimeout(() => { dot.style.opacity = 0; resolve(); }, ms + 40);
+    setTimeout(() => { dot.style.opacity = 0; resolve(); }, ms + 30);
   });
 }
 
-const coords = {
-  x1h1: [90,130,340,90], x1h2: [90,130,340,300],
-  x2h1: [90,270,340,90], x2h2: [90,270,340,300],
-  h1y:  [360,90,600,195], h2y:  [360,300,600,195]
+const edgeMap = {
+  x1h1: [90,125,340,85], x1h2: [90,125,340,295],
+  x2h1: [90,265,340,85], x2h2: [90,265,340,295],
+  h1y:  [360,85,600,190], h2y:  [360,295,600,190]
 };
 
-async function animForward() {
+async function animForwardPass() {
   await Promise.all([
-    pulse("dot-x1h1", ...coords.x1h1, "#38bdf8"),
-    pulse("dot-x1h2", ...coords.x1h2, "#38bdf8"),
-    pulse("dot-x2h1", ...coords.x2h1, "#38bdf8"),
-    pulse("dot-x2h2", ...coords.x2h2, "#38bdf8")
+    pulseSignal("dot-x1h1", ...edgeMap.x1h1, "#38bdf8"),
+    pulseSignal("dot-x1h2", ...edgeMap.x1h2, "#38bdf8"),
+    pulseSignal("dot-x2h1", ...edgeMap.x2h1, "#38bdf8"),
+    pulseSignal("dot-x2h2", ...edgeMap.x2h2, "#38bdf8")
   ]);
   await Promise.all([
-    pulse("dot-h1y", ...coords.h1y, "#38bdf8"),
-    pulse("dot-h2y", ...coords.h2y, "#38bdf8")
+    pulseSignal("dot-h1y", ...edgeMap.h1y, "#38bdf8"),
+    pulseSignal("dot-h2y", ...edgeMap.h2y, "#38bdf8")
   ]);
 }
 
-async function animBackward() {
+async function animBackwardPass() {
   const rev = (c) => [c[2], c[3], c[0], c[1]];
   await Promise.all([
-    pulse("dot-h1y", ...rev(coords.h1y), "#fbbf24"),
-    pulse("dot-h2y", ...rev(coords.h2y), "#fbbf24")
+    pulseSignal("dot-h1y", ...rev(edgeMap.h1y), "#fbbf24"),
+    pulseSignal("dot-h2y", ...rev(edgeMap.h2y), "#fbbf24")
   ]);
   await Promise.all([
-    pulse("dot-x1h1", ...rev(coords.x1h1), "#fbbf24"),
-    pulse("dot-x1h2", ...rev(coords.x1h2), "#fbbf24"),
-    pulse("dot-x2h1", ...rev(coords.x2h1), "#fbbf24"),
-    pulse("dot-x2h2", ...rev(coords.x2h2), "#fbbf24")
+    pulseSignal("dot-x1h1", ...rev(edgeMap.x1h1), "#fbbf24"),
+    pulseSignal("dot-x1h2", ...rev(edgeMap.x1h2), "#fbbf24"),
+    pulseSignal("dot-x2h1", ...rev(edgeMap.x2h1), "#fbbf24"),
+    pulseSignal("dot-x2h2", ...rev(edgeMap.x2h2), "#fbbf24")
   ]);
 }
 
-async function renderAnimPhase() {
-  document.getElementById("btnNextStep").disabled = true;
+async function renderStepUI() {
+  document.getElementById("btnNext").disabled = true;
 
-  // Pipeline badges
+  // Update pills
   for (let i = 0; i < 5; i++) {
-    const el = document.getElementById("pipe-" + i);
+    const el = document.getElementById("step-" + i);
     el.classList.remove("active", "done");
     if (i < animPhase) el.classList.add("done");
     else if (i === animPhase) el.classList.add("active");
   }
 
-  document.getElementById("animStepTitle").innerHTML = `Step <span>${animPhase + 1} / 5</span> — ${stepNames[animPhase]}`;
-  document.getElementById("lblAnimEpoch").textContent = animEpoch;
+  const s = stories[animPhase];
+  document.getElementById("storyTitle").innerHTML = s.title;
+  document.getElementById("storyBody").innerHTML = s.body;
+  document.getElementById("lblWalkEpoch").textContent = animEpoch;
 
   if (animPhase === 0) {
     ["v-x1","v-x2","v-h1","v-h2","v-y"].forEach(id => document.getElementById(id).textContent = "");
     document.getElementById("lossText").textContent = "";
-    drawAnimWeights();
-    document.getElementById("animStepBody").textContent =
-      `Weights initialized with small random values. Input x1 = ${animX1}, x2 = ${animX2} → Target y = ${animYTrue}.`;
+    drawGraphWeights();
+    document.getElementById("storyMath").textContent = s.math;
   } else if (animPhase === 1) {
     const zh1 = animX1*animW.x1h1 + animX2*animW.x2h1 + animW.bh1;
     const ah1 = Math.tanh(zh1);
@@ -1034,21 +1259,21 @@ async function renderAnimPhase() {
 
     document.getElementById("v-x1").textContent = animX1;
     document.getElementById("v-x2").textContent = animX2;
-    await animForward();
+    await animForwardPass();
     document.getElementById("v-h1").textContent = f(ah1);
     document.getElementById("v-h2").textContent = f(ah2);
     document.getElementById("v-y").textContent = f(ay);
 
-    document.getElementById("animStepBody").textContent =
-      `h1 = tanh(${f(zh1)}) = ${f(ah1)}   |   h2 = tanh(${f(zh2)}) = ${f(ah2)}   |   ŷ = sigmoid(${f(zy)}) = ${f(ay)}.`;
+    document.getElementById("storyMath").innerHTML =
+      `h1 = tanh(${f(zh1)}) = <b>${f(ah1)}</b> | h2 = tanh(${f(zh2)}) = <b>${f(ah2)}</b> | ŷ = sigmoid(${f(zy)}) = <b>${f(ay)}</b>`;
   } else if (animPhase === 2) {
     const ay = Math.max(1e-8, Math.min(1 - 1e-8, animCache.ay));
     animCache.loss = -(animYTrue * Math.log(ay) + (1 - animYTrue) * Math.log(1 - ay));
     document.getElementById("lossText").textContent = "loss = " + f(animCache.loss);
-    document.getElementById("animStepBody").textContent =
-      `Binary cross-entropy loss = ${f(animCache.loss)}. Backpropagation will now compute gradients to reduce this loss.`;
+    document.getElementById("storyMath").innerHTML =
+      `Target y = ${animYTrue}, Guess ŷ = ${f(animCache.ay)} → Loss = <b>${f(animCache.loss)}</b>`;
   } else if (animPhase === 3) {
-    await animBackward();
+    await animBackwardPass();
     const dZy = animCache.ay - animYTrue;
     const dWh1y = animCache.ah1 * dZy;
     const dWh2y = animCache.ah2 * dZy;
@@ -1059,54 +1284,57 @@ async function renderAnimPhase() {
     const dWx1h2 = animX1 * dZh2, dWx2h2 = animX2 * dZh2, dBh2 = dZh2;
     animCache.grads = { dWh1y, dWh2y, dBy, dWx1h1, dWx2h1, dBh1, dWx1h2, dWx2h2, dBh2 };
 
-    document.getElementById("animStepBody").textContent =
-      `Chain rule gradients: dW_h1y = ${f(dWh1y)}, dW_h2y = ${f(dWh2y)}, dW_x1h1 = ${f(dWx1h1)}, dW_x2h2 = ${f(dWx2h2)}.`;
+    document.getElementById("storyMath").innerHTML =
+      `Gradients (chain rule): ∂L/∂w_h1y = <b>${f(dWh1y)}</b>, ∂L/∂w_h2y = <b>${f(dWh2y)}</b>, ∂L/∂w_x1h1 = <b>${f(dWx1h1)}</b>`;
   } else if (animPhase === 4) {
     const g = animCache.grads;
     animW.h1y -= animLr * g.dWh1y; animW.h2y -= animLr * g.dWh2y; animW.by -= animLr * g.dBy;
     animW.x1h1 -= animLr * g.dWx1h1; animW.x2h1 -= animLr * g.dWx2h1; animW.bh1 -= animLr * g.dBh1;
     animW.x1h2 -= animLr * g.dWx1h2; animW.x2h2 -= animLr * g.dWx2h2; animW.bh2 -= animLr * g.dBh2;
-    drawAnimWeights();
+    drawGraphWeights();
 
-    document.getElementById("animStepBody").textContent =
-      `Weights updated: θ ← θ - η · ∇θ. Click "Next Step" to proceed to epoch ${animEpoch + 1}.`;
+    document.getElementById("storyMath").innerHTML =
+      `Weights successfully nudged! Click "Next Step" to send the example through epoch ${animEpoch + 1}.`;
   }
 
-  document.getElementById("btnNextStep").disabled = false;
+  document.getElementById("btnNext").disabled = false;
 }
 
-function nextAnimStep() {
+function nextStep() {
   animPhase++;
   if (animPhase > 4) { animPhase = 1; animEpoch++; }
-  renderAnimPhase();
+  renderStepUI();
 }
 
-function toggleAutoPlay() {
-  isAutoPlaying = !isAutoPlaying;
-  const btn = document.getElementById("btnAutoPlay");
-  btn.textContent = isAutoPlaying ? "Pause" : "Auto-Play";
-  btn.classList.toggle("btn-playing", isAutoPlaying);
+function gotoStep(idx) {
+  animPhase = idx;
+  renderStepUI();
+}
 
-  if (isAutoPlaying) {
-    autoPlayTimer = setInterval(() => {
-      nextAnimStep();
-    }, 1500);
+function toggleAuto() {
+  isAuto = !isAuto;
+  const btn = document.getElementById("btnAuto");
+  btn.textContent = isAuto ? "Pause" : "Auto-Play";
+  btn.classList.toggle("btn-playing", isAuto);
+
+  if (isAuto) {
+    autoTimer = setInterval(() => { nextStep(); }, 1500);
   } else {
-    clearInterval(autoPlayTimer);
+    clearInterval(autoTimer);
   }
 }
 
-function resetAnim() {
+function resetWalkthrough() {
   animW = { x1h1: 0.35, x1h2: -0.20, x2h1: 0.10, x2h2: 0.40, bh1: 0.05, bh2: -0.10, h1y: 0.50, h2y: -0.30, by: 0.05 };
   animEpoch = 1; animPhase = 0;
-  if (isAutoPlaying) toggleAutoPlay();
-  renderAnimPhase();
+  if (isAuto) toggleAuto();
+  renderStepUI();
 }
 
-// Initial Boot
+// Window load init
 window.addEventListener("DOMContentLoaded", () => {
   resetAndTrain();
-  renderAnimPhase();
+  renderStepUI();
 });
 </script>
 </body>

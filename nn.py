@@ -66,7 +66,14 @@ def leaky_relu(z: np.ndarray, alpha: float = 0.01) -> np.ndarray:
 
 def leaky_relu_derivative(a: np.ndarray, alpha: float = 0.01) -> np.ndarray:
     """Derivative of Leaky ReLU: 1 if a > 0 else α."""
-    return np.where(a > 0.0, 1.0, alpha)
+def elu(z: np.ndarray, alpha: float = 1.0) -> np.ndarray:
+    """Exponential Linear Unit: ELU(z) = z if z > 0 else alpha * (exp(z) - 1)."""
+    return np.where(z > 0.0, z, alpha * (np.exp(np.clip(z, -500.0, 50.0)) - 1.0))
+
+
+def elu_derivative(a: np.ndarray, alpha: float = 1.0) -> np.ndarray:
+    """Derivative of ELU: 1 if a > 0 else a + alpha."""
+    return np.where(a > 0.0, 1.0, a + alpha)
 
 
 ACTIVATIONS = {
@@ -74,6 +81,7 @@ ACTIVATIONS = {
     "relu": (relu, relu_derivative),
     "leaky_relu": (leaky_relu, leaky_relu_derivative),
     "sigmoid": (sigmoid, sigmoid_derivative),
+    "elu": (elu, elu_derivative),
 }
 
 

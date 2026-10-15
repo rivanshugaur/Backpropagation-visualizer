@@ -1,13 +1,13 @@
 """
-Backpropagation Visualizer
----------------------------
+Backpropagation Visualizer (Streamlit Edition)
+----------------------------------------------
 An interactive Streamlit app with two intuitive views:
 
   1. Explore Trained Model — trains a from-scratch (NumPy-only) neural
      network and lets you scrub through training epoch-by-epoch to see
      the decision boundary, loss curve, gradient magnitudes, and weight
      matrices at any point in training.
-  2. Watch It Learn (Animated) — a step-by-step animated walkthrough of
+  2. Watch It Learn (Animated) — an intuitive, animated walkthrough of
      one training example moving through forward pass, loss, backward
      pass, and weight update, in motion.
 
@@ -34,13 +34,15 @@ st.set_page_config(
 st.sidebar.title("⚙️ Configuration")
 
 dataset_name = st.sidebar.selectbox(
-    "Dataset", ["Moons", "Circles", "Blobs (2-class)"]
+    "Dataset", ["Moons", "Circles", "XOR", "Spirals", "Blobs", "Ring"]
 )
 noise = st.sidebar.slider("Noise", 0.0, 0.4, 0.15, 0.05)
 hidden_dim = st.sidebar.slider("Hidden layer size", 2, 32, 8)
-activation = st.sidebar.selectbox("Activation function", ["tanh", "relu"])
-learning_rate = st.sidebar.slider("Learning rate", 0.01, 1.0, 0.2, 0.01)
-epochs = st.sidebar.slider("Epochs to train", 20, 300, 150, 10)
+activation = st.sidebar.selectbox(
+    "Activation function", ["tanh", "relu", "leaky_relu", "sigmoid", "elu"]
+)
+learning_rate = st.sidebar.slider("Learning rate", 0.01, 1.0, 0.15, 0.01)
+epochs = st.sidebar.slider("Epochs to train", 20, 300, 160, 10)
 train_clicked = st.sidebar.button("🚀 Train Network", use_container_width=True)
 
 st.title("🧠 Backpropagation Visualizer")
@@ -52,13 +54,39 @@ st.caption(
 
 # ----------------------------- Dataset generation ----------------------------
 @st.cache_data
-def get_dataset(name, noise_val):
+def get_dataset(name, noise_val, seed=42):
+    rng = np.random.default_rng(seed)
+    n_samples = 260
+    half = n_samples // 2
+
     if name == "Moons":
-        X, y = make_moons(n_samples=250, noise=noise_val, random_state=42)
+        X, y = make_moons(n_samples=n_samples, noise=noise_val, random_state=seed)
     elif name == "Circles":
-        X, y = make_circles(n_samples=250, noise=noise_val, factor=0.45, random_state=42)
+        X, y = make_circles(n_samples=n_samples, noise=noise_val, factor=0.45, random_state=seed)
+    elif name == "XOR":
+        x1 = (rng.random(n_samples) * 2 - 1) * 1.1
+        x2 = (rng.random(n_samples) * 2 - 1) * 1.1
+        X = np.column_stack([x1 + rng.normal(0, noise_val * 0.5, n_samples),
+                             x2 + rng.normal(0, noise_val * 0.5, n_samples)])
+        y = ((x1 * x2) > 0).astype(int)
+    elif name == "Spirals":
+        r = np.linspace(0, 1.05, half)
+        t = np.linspace(0, 3.5 * np.pi, half)
+        X1 = np.column_stack([r * np.sin(t), r * np.cos(t)]) + rng.normal(0, noise_val * 0.2, (half, 2))
+        X2 = np.column_stack([-r * np.sin(t), -r * np.cos(t)]) + rng.normal(0, noise_val * 0.2, (half, 2))
+        X = np.vstack([X1, X2])
+        y = np.array([0] * half + [1] * half)
+    elif name == "Ring":
+        th = np.linspace(0, 2 * np.pi, half)
+        r1 = 0.25 + rng.normal(0, noise_val * 0.2, half)
+        r2 = 0.85 + rng.normal(0, noise_val * 0.2, half)
+        X1 = np.column_stack([r1 * np.cos(th), r1 * np.sin(th)])
+        X2 = np.column_stack([r2 * np.cos(th), r2 * np.sin(th)])
+        X = np.vstack([X1, X2])
+        y = np.array([0] * half + [1] * half)
     else:
-        X, y = make_blobs(n_samples=250, centers=2, cluster_std=1.0 + noise_val * 3, random_state=42)
+        X, y = make_blobs(n_samples=n_samples, centers=2, cluster_std=1.0 + noise_val * 3, random_state=seed)
+
     X = (X - X.mean(axis=0)) / (X.std(axis=0) + 1e-8)
     return X, y
 
