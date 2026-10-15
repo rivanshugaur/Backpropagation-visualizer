@@ -3,259 +3,175 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Backpropagation Visualizer — Analytical Neural Network Engine</title>
-<meta name="description" content="An interactive, production-grade backpropagation visualizer with hand-derived calculus, real-time 60 FPS decision boundary, dynamic computation graph, step debugger, and interview reference.">
+<title>Backpropagation Visualizer</title>
+<meta name="description" content="An interactive, easy-to-understand backpropagation visualizer. Watch a neural network learn from scratch with intuitive visuals and real-time training.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- KaTeX for beautiful math equations -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
-
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg-base: #07090e;
-    --bg-panel: #0e121b;
-    --bg-card: #141926;
-    --bg-card-hover: #192032;
-    --border: #202738;
-    --border-accent: #2e3a54;
-    --border-glow: rgba(94, 234, 212, 0.3);
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #5e6b82;
+    --bg: #090b10;
+    --bg-panel: #11141c;
+    --bg-card: #161b26;
+    --border: #222838;
+    --border-focus: #38bdf8;
+    --text: #edf2f7;
+    --text-dim: #94a3b8;
+    --text-faint: #64748b;
     --cyan: #38bdf8;
-    --cyan-glow: rgba(56, 189, 248, 0.35);
-    --emerald: #34d399;
-    --emerald-glow: rgba(52, 211, 153, 0.3);
     --amber: #fbbf24;
-    --amber-glow: rgba(251, 191, 36, 0.3);
     --rose: #f43f5e;
-    --rose-glow: rgba(244, 63, 94, 0.3);
-    --purple: #a855f7;
+    --green: #34d399;
     --font-heading: 'Space Grotesk', -apple-system, sans-serif;
     --font-body: 'Inter', -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; background: var(--bg-base); color: var(--text-primary); font-family: var(--font-body); }
   body {
-    min-height: 100vh;
     background:
       radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.04) 0%, transparent 40%),
-      radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.04) 0%, transparent 40%),
-      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.03) 1px, transparent 0) 0 0/32px 32px,
-      var(--bg-base);
-    color: var(--text-primary);
-    line-height: 1.5;
-    padding-bottom: 60px;
+      radial-gradient(circle at 90% 80%, rgba(251, 191, 36, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.03) 1px, transparent 0) 0 0/28px 28px,
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    padding: 24px 20px 60px;
+    -webkit-font-smoothing: antialiased;
   }
+  .wrap { max-width: 1040px; margin: 0 auto; }
 
   /* Header */
-  header {
-    border-bottom: 1px solid var(--border);
-    background: rgba(14, 18, 27, 0.85);
-    backdrop-filter: blur(14px);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .header-inner {
-    max-width: 1360px;
-    margin: 0 auto;
-    padding: 14px 24px;
-    display: flex;
-    justify-content: space-between;
+  header { margin-bottom: 24px; }
+  .eyebrow {
+    display: inline-flex;
     align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 8px;
   }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    animation: pulse 1.8s ease-in-out infinite;
   }
-  .brand-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #0284c7, #38bdf8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 16px var(--cyan-glow);
-  }
-  .brand-icon svg { width: 22px; height: 22px; stroke: #04121e; }
-  .brand-title {
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  h1 {
     font-family: var(--font-heading);
-    font-size: 19px;
     font-weight: 700;
-    letter-spacing: -0.01em;
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .sub {
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.5;
+    max-width: 700px;
+  }
+
+  /* Main Navigation Tabs */
+  .nav-tabs {
     display: flex;
+    gap: 6px;
+    background: var(--bg-panel);
+    padding: 5px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+    width: fit-content;
+  }
+  .tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 9px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
   }
-  .brand-tag {
-    font-size: 11px;
-    font-family: var(--font-mono);
-    padding: 2px 7px;
-    border-radius: 12px;
-    background: rgba(56, 189, 248, 0.12);
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    color: var(--cyan);
-  }
-  .header-badges {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .badge {
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    padding: 5px 11px;
-    border-radius: 6px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .badge.verified {
-    border-color: rgba(52, 211, 153, 0.4);
-    color: var(--emerald);
-    background: rgba(52, 211, 153, 0.08);
-  }
-  .badge .dot {
-    width: 6px; height: 6px; border-radius: 50%; background: currentColor;
-    box-shadow: 0 0 8px currentColor;
-  }
-
-  /* Nav Tabs */
-  .nav-tabs {
-    display: flex;
-    gap: 4px;
-    background: var(--bg-card);
-    padding: 4px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-  }
-  .nav-tab-btn {
-    background: transparent;
-    border: none;
-    padding: 7px 15px;
-    border-radius: 7px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .nav-tab-btn:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.04); }
-  .nav-tab-btn.active {
+  .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .tab-btn.active {
     background: var(--cyan);
     color: #04121e;
-    font-weight: 600;
-    box-shadow: 0 2px 10px var(--cyan-glow);
+    box-shadow: 0 2px 12px rgba(56, 189, 248, 0.35);
   }
 
-  /* Main Container */
-  .container {
-    max-width: 1360px;
-    margin: 24px auto;
-    padding: 0 24px;
-  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
 
-  /* Layout grids */
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
-
-  .playground-grid {
+  /* Grid Layouts */
+  .grid-explore {
     display: grid;
-    grid-template-columns: 320px 1fr 340px;
+    grid-template-columns: 290px 1fr;
     gap: 20px;
-    align-items: start;
-  }
-  @media (max-width: 1200px) {
-    .playground-grid { grid-template-columns: 300px 1fr; }
-    .side-metrics { grid-column: span 2; }
   }
   @media (max-width: 860px) {
-    .playground-grid { grid-template-columns: 1fr; }
-    .side-metrics { grid-column: span 1; }
+    .grid-explore { grid-template-columns: 1fr; }
   }
 
-  /* Panels */
+  /* Panels & Cards */
   .panel {
     background: var(--bg-panel);
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 20px;
-    position: relative;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  }
-  .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
   }
   .panel-title {
     font-family: var(--font-heading);
     font-size: 15px;
     font-weight: 700;
-    letter-spacing: 0.02em;
-    color: var(--text-primary);
+    margin-bottom: 16px;
+    color: var(--text);
     display: flex;
     align-items: center;
     gap: 8px;
-    text-transform: uppercase;
   }
-  .panel-title svg { width: 17px; height: 17px; stroke: var(--cyan); }
 
-  /* Controls */
-  .control-group {
-    margin-bottom: 16px;
-  }
-  .control-label {
+  /* Form Controls */
+  .field { margin-bottom: 16px; }
+  .field label {
     display: flex;
     justify-content: space-between;
     font-size: 12px;
     font-family: var(--font-mono);
-    color: var(--text-secondary);
+    color: var(--text-dim);
     margin-bottom: 6px;
   }
-  .control-label span:last-child {
+  .field label span:last-child {
     color: var(--cyan);
     font-weight: 600;
   }
-  select, input[type="range"], input[type="number"] {
+  select, input[type="range"] {
     width: 100%;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    color: var(--text-primary);
-    padding: 8px 12px;
+    color: var(--text);
+    padding: 9px 12px;
     font-family: var(--font-mono);
     font-size: 13px;
     outline: none;
     transition: border-color 0.2s;
   }
-  select:focus, input:focus { border-color: var(--cyan); }
+  select:focus { border-color: var(--cyan); }
   input[type="range"] {
     -webkit-appearance: none;
     height: 6px;
     padding: 0;
-    background: var(--bg-card);
-    border-radius: 3px;
     cursor: pointer;
   }
   input[type="range"]::-webkit-slider-thumb {
@@ -263,1219 +179,485 @@
     width: 16px; height: 16px; border-radius: 50%;
     background: var(--cyan);
     cursor: pointer;
-    box-shadow: 0 0 10px var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
   }
 
-  .btn-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-top: 14px;
-  }
+  /* Buttons */
   button.btn {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    padding: 9px 14px;
-    border-radius: 8px;
-    font-family: var(--font-body);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid var(--border-accent);
-    background: var(--bg-card);
-    color: var(--text-primary);
-    transition: all 0.15s ease-out;
+    gap: 8px;
   }
-  button.btn:hover { background: var(--bg-card-hover); border-color: var(--cyan); }
+  button.btn:hover { border-color: var(--cyan); color: var(--cyan); }
   button.btn:active { transform: scale(0.98); }
   button.btn-primary {
-    background: linear-gradient(135deg, #0284c7, #38bdf8);
-    border: 1px solid #38bdf8;
+    background: var(--cyan);
+    border-color: var(--cyan);
     color: #04121e;
-    font-weight: 700;
-    box-shadow: 0 2px 14px var(--cyan-glow);
   }
-  button.btn-primary:hover { filter: brightness(1.1); }
-  button.btn-emerald {
-    background: rgba(52, 211, 153, 0.15);
-    border-color: rgba(52, 211, 153, 0.4);
-    color: var(--emerald);
-  }
-  button.btn-emerald:hover { background: rgba(52, 211, 153, 0.25); }
+  button.btn-primary:hover { filter: brightness(1.1); color: #04121e; }
+  button.btn-playing { background: var(--amber); border-color: var(--amber); color: #201004; }
 
-  /* Canvas and Visualizer area */
-  .canvas-container {
-    position: relative;
-    width: 100%;
-    background: #080a10;
+  /* Visualization Views */
+  .viz-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 680px) {
+    .viz-row { grid-template-columns: 1fr; }
+  }
+
+  .canvas-box {
+    background: #080a0f;
     border-radius: 12px;
     border: 1px solid var(--border);
     overflow: hidden;
-    aspect-ratio: 1 / 1;
-    max-height: 480px;
+    position: relative;
+    aspect-ratio: 1/1;
+    max-height: 380px;
     margin: 0 auto;
-    cursor: crosshair;
   }
-  canvas#decisionCanvas {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-  .canvas-overlay-hud {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: rgba(14, 18, 27, 0.85);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-secondary);
-    pointer-events: none;
-    backdrop-filter: blur(8px);
-  }
-  .canvas-overlay-hud span { color: var(--cyan); font-weight: 600; }
-  .canvas-legend {
-    display: flex;
-    justify-content: center;
-    gap: 18px;
-    margin-top: 12px;
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    color: var(--text-secondary);
-  }
-  .canvas-legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  canvas#decisionCanvas { width: 100%; height: 100%; display: block; }
 
-  /* Metrics Charts */
-  .metric-card {
+  .stat-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 14px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  .stat-row .v { font-weight: 700; color: var(--text); }
+  .chart-svg { width: 100%; height: 70px; display: block; overflow: visible; }
+
+  /* Scrubber */
+  .scrubber-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 16px;
+  }
+
+  /* Animated Walkthrough View */
+  .scope-frame {
+    position: relative;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 20px 16px;
+    margin-bottom: 16px;
+  }
+  svg#animSvg { width: 100%; height: auto; display: block; }
+  .node-label { font-size: 12px; fill: var(--text-faint); font-family: var(--font-mono); }
+  .node-value { font-size: 13px; fill: var(--text); font-weight: 600; font-family: var(--font-mono); }
+  .edge-label { font-size: 10px; fill: var(--text-faint); font-family: var(--font-mono); }
+  .dot { opacity: 0; filter: drop-shadow(0 0 6px currentColor); }
+
+  .pipeline {
+    display: flex;
+    gap: 6px;
     margin-bottom: 14px;
   }
-  .metric-stat-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 8px;
-  }
-  .metric-title { font-size: 11.5px; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase; }
-  .metric-value { font-size: 18px; font-family: var(--font-mono); font-weight: 700; color: var(--text-primary); }
-  .metric-svg { width: 100%; height: 75px; display: block; overflow: visible; }
-
-  /* Network Architecture SVG tab */
-  .arch-view-wrapper {
-    display: grid;
-    grid-template-columns: 1fr 340px;
-    gap: 20px;
-  }
-  @media (max-width: 990px) {
-    .arch-view-wrapper { grid-template-columns: 1fr; }
-  }
-  .svg-graph-box {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 24px;
-    position: relative;
-    overflow: hidden;
-  }
-  svg#graphSvg {
-    width: 100%;
-    height: 480px;
-    display: block;
-  }
-  .node-circle {
-    transition: transform 0.2s, stroke-width 0.2s, filter 0.2s;
-    cursor: pointer;
-  }
-  .node-circle:hover {
-    stroke-width: 3px !important;
-    filter: drop-shadow(0 0 10px var(--cyan));
-  }
-  .edge-line {
-    transition: stroke-width 0.3s, stroke 0.3s;
-    cursor: pointer;
-  }
-  .edge-line:hover {
-    stroke-width: 5px !important;
-  }
-
-  /* Node/Synapse Inspector */
-  .inspector-card {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px;
-  }
-  .inspect-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 7px 0;
-    border-bottom: 1px dashed var(--border);
-    font-family: var(--font-mono);
-    font-size: 12.5px;
-  }
-  .inspect-row .k { color: var(--text-muted); }
-  .inspect-row .v { color: var(--text-primary); font-weight: 600; }
-  .inspect-formula {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px;
-    margin-top: 12px;
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    color: var(--cyan);
-    word-break: break-all;
-  }
-
-  /* Step Debugger */
-  .stepper-pipeline {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-    margin-bottom: 18px;
-  }
-  .step-pill {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 6px;
+  .pipeline-step {
+    flex: 1;
     text-align: center;
+    padding: 9px 4px;
+    border-radius: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--text-muted);
-    transition: all 0.2s;
-    cursor: pointer;
+    color: var(--text-faint);
+    transition: all 0.25s;
   }
-  .step-pill.active {
+  .pipeline-step.active {
     background: var(--cyan);
     border-color: var(--cyan);
     color: #04121e;
     font-weight: 700;
-    box-shadow: 0 0 14px var(--cyan-glow);
   }
-  .step-pill.completed {
+  .pipeline-step.done {
+    color: var(--green);
     border-color: rgba(52, 211, 153, 0.4);
-    color: var(--emerald);
     background: rgba(52, 211, 153, 0.08);
   }
 
-  .step-detail-card {
+  .step-box {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 20px;
+    padding: 16px 20px;
     margin-bottom: 16px;
   }
-  .step-detail-title {
+  .step-title {
     font-family: var(--font-heading);
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    margin-bottom: 6px;
+    color: var(--text);
   }
-  .step-detail-body {
-    font-size: 13.5px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin-bottom: 14px;
-  }
-  .step-math-box {
-    background: #090c14;
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--cyan);
-    border-radius: 8px;
-    padding: 14px 16px;
+  .step-title span { color: var(--cyan); }
+  .step-body {
     font-family: var(--font-mono);
-    font-size: 13px;
-    color: #e2e8f0;
-    overflow-x: auto;
-    margin-bottom: 14px;
-  }
-
-  /* Interview Deep-Dive Accordion */
-  .qa-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .qa-item {
-    background: var(--bg-panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  .qa-item:hover { border-color: var(--border-accent); }
-  .qa-header {
-    padding: 16px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    font-family: var(--font-heading);
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text-primary);
-    user-select: none;
-  }
-  .qa-header .q-tag {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 6px;
-    background: rgba(56, 189, 248, 0.12);
-    color: var(--cyan);
-    margin-right: 10px;
-  }
-  .qa-chevron {
-    transition: transform 0.2s;
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-  .qa-item.open .qa-chevron { transform: rotate(180deg); }
-  .qa-body {
-    display: none;
-    padding: 0 20px 20px 20px;
-    font-size: 14px;
-    color: var(--text-secondary);
-    line-height: 1.7;
-    border-top: 1px solid var(--border);
-    padding-top: 16px;
-  }
-  .qa-item.open .qa-body { display: block; }
-  .qa-body code {
-    font-family: var(--font-mono);
-    background: var(--bg-card);
-    padding: 2px 6px;
-    border-radius: 4px;
-    color: var(--cyan);
     font-size: 12.5px;
-  }
-  .qa-callout {
-    background: rgba(56, 189, 248, 0.06);
-    border-left: 3px solid var(--cyan);
-    padding: 12px 14px;
-    border-radius: 6px;
-    margin: 12px 0;
-    font-size: 13px;
-    color: #e2e8f0;
+    color: var(--text-dim);
+    line-height: 1.6;
   }
 
-  /* Matrix Inspector Grid */
-  .matrix-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
+  .anim-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
   }
-  .matrix-box {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-  }
-  .matrix-title {
+  .anim-controls button { width: auto; padding: 9px 18px; }
+  .epoch-badge {
+    margin-left: auto;
     font-family: var(--font-mono);
     font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-  }
-  .matrix-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    text-align: center;
-  }
-  .matrix-table td {
-    padding: 5px 6px;
+    background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 20px;
+    padding: 6px 14px;
+    color: var(--text-dim);
   }
+  .epoch-badge b { color: var(--cyan); }
+
+  .legend {
+    display: flex;
+    gap: 18px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-dim);
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+    flex-wrap: wrap;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 12px; height: 3px; border-radius: 2px; }
 </style>
 </head>
 <body>
 
-<!-- Header -->
-<header>
-  <div class="header-inner">
-    <div class="brand">
-      <div class="brand-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M3 12h3m12 0h3M12 3v3m0 12v3"></path>
-          <path d="M5.6 5.6l2.1 2.1m8.6 8.6l2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6l2.1-2.1"></path>
-        </svg>
-      </div>
-      <div>
-        <div class="brand-title">
-          Backprop Visualizer
-          <span class="brand-tag">v2.0 Analytical</span>
-        </div>
-      </div>
-    </div>
+<div class="wrap">
+  <header>
+    <div class="eyebrow"><span class="dot"></span>Pure NumPy Logic · Zero Autograd</div>
+    <h1>Backpropagation Visualizer</h1>
+    <p class="sub">
+      A neural network trained with hand-derived backpropagation. Scrub through training epoch-by-epoch or watch the math happen step-by-step.
+    </p>
+  </header>
 
-    <!-- Navigation Tabs -->
-    <div class="nav-tabs">
-      <button class="nav-tab-btn active" onclick="switchTab('playground')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
-        Playground
-      </button>
-      <button class="nav-tab-btn" onclick="switchTab('graph')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-        Signal Trace
-      </button>
-      <button class="nav-tab-btn" onclick="switchTab('debugger')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line></svg>
-        Step Debugger
-      </button>
-      <button class="nav-tab-btn" onclick="switchTab('matrices')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
-        Tensors
-      </button>
-      <button class="nav-tab-btn" onclick="switchTab('interview')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-        Interview Guide
-      </button>
-    </div>
-
-    <!-- Status Badges -->
-    <div class="header-badges">
-      <span class="badge verified" id="gradCheckBadge" title="Verified against numerical central differences">
-        <span class="dot"></span>Finite Diff: Exact (7.8e-9)
-      </span>
-      <span class="badge">
-        Autograd: <b>Pure Analytical</b>
-      </span>
-    </div>
+  <!-- Navigation Tabs -->
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="setTab('explore')">
+      📊 Explore Trained Model
+    </button>
+    <button class="tab-btn" onclick="setTab('animated')">
+      🎬 Watch It Learn (Animated)
+    </button>
   </div>
-</header>
-
-<!-- Main Container -->
-<div class="container">
 
   <!-- ========================================================================= -->
-  <!-- TAB 1: PLAYGROUND & 2D DECISION BOUNDARY -->
+  <!-- TAB 1: EXPLORE TRAINED MODEL -->
   <!-- ========================================================================= -->
-  <div id="tab-playground" class="tab-content active">
-    <div class="playground-grid">
+  <div id="tab-explore" class="tab-panel active">
+    <div class="grid-explore">
 
-      <!-- Left Column: Hyperparameter Controls -->
+      <!-- Left Controls -->
       <div class="panel">
-        <div class="panel-header">
-          <div class="panel-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            Hyperparameters
-          </div>
-        </div>
+        <div class="panel-title">⚙️ Configuration</div>
 
-        <div class="control-group">
-          <div class="control-label"><span>Dataset Topology</span></div>
-          <select id="selDataset" onchange="resetDataset()">
-            <option value="moons">Two Interlocking Moons</option>
-            <option value="circles">Concentric Circles (Non-linear)</option>
-            <option value="xor">XOR Problem (4 Quadrants)</option>
-            <option value="blobs">Separated Gaussian Blobs</option>
-            <option value="spirals">Two Intertwined Spirals</option>
+        <div class="field">
+          <label>Dataset</label>
+          <select id="selDataset" onchange="resetAndTrain()">
+            <option value="moons">Two Moons</option>
+            <option value="circles">Concentric Circles</option>
+            <option value="blobs">Blobs (2-class)</option>
           </select>
         </div>
 
-        <div class="control-group">
-          <div class="control-label"><span>Activation Function</span></div>
-          <select id="selActivation" onchange="initNetwork()">
-            <option value="tanh">Tanh: f(z) = tanh(z)</option>
-            <option value="relu">ReLU: f(z) = max(0, z)</option>
-            <option value="leaky_relu">Leaky ReLU: f(z) = max(0.01z, z)</option>
-            <option value="sigmoid">Sigmoid: f(z) = 1/(1+e^-z)</option>
+        <div class="field">
+          <label><span>Noise</span><span id="lblNoise">0.15</span></label>
+          <input type="range" id="rngNoise" min="0.0" max="0.4" step="0.05" value="0.15" oninput="updateLabel('lblNoise', this.value)" onchange="resetAndTrain()">
+        </div>
+
+        <div class="field">
+          <label><span>Hidden Layer Size</span><span id="lblHidden">8</span></label>
+          <input type="range" id="rngHidden" min="2" max="16" step="1" value="8" oninput="updateLabel('lblHidden', this.value)" onchange="resetAndTrain()">
+        </div>
+
+        <div class="field">
+          <label>Activation Function</label>
+          <select id="selAct" onchange="resetAndTrain()">
+            <option value="tanh">tanh</option>
+            <option value="relu">relu</option>
           </select>
         </div>
 
-        <div class="control-group">
-          <div class="control-label"><span>Optimizer</span></div>
-          <select id="selOptimizer">
-            <option value="adam">Adam (Adaptive Moments)</option>
-            <option value="momentum">Momentum (β = 0.9)</option>
-            <option value="sgd">Standard SGD</option>
-          </select>
+        <div class="field">
+          <label><span>Learning Rate</span><span id="lblLr">0.20</span></label>
+          <input type="range" id="rngLr" min="0.01" max="1.0" step="0.01" value="0.20" oninput="updateLabel('lblLr', this.value)" onchange="resetAndTrain()">
         </div>
 
-        <div class="control-group">
-          <div class="control-label">
-            <span>Hidden Layer Units</span>
-            <span id="valHidden">8</span>
-          </div>
-          <input type="range" id="rngHidden" min="2" max="16" value="8" step="1" oninput="updateHiddenVal(this.value)" onchange="initNetwork()">
+        <div class="field">
+          <label><span>Epochs to Train</span><span id="lblEpochs">150</span></label>
+          <input type="range" id="rngEpochs" min="20" max="300" step="10" value="150" oninput="updateLabel('lblEpochs', this.value)" onchange="resetAndTrain()">
         </div>
 
-        <div class="control-group">
-          <div class="control-label">
-            <span>Learning Rate (η)</span>
-            <span id="valLr">0.10</span>
-          </div>
-          <input type="range" id="rngLr" min="0.01" max="1.0" value="0.10" step="0.01" oninput="document.getElementById('valLr').textContent=parseFloat(this.value).toFixed(2)">
-        </div>
-
-        <div class="control-group">
-          <div class="control-label">
-            <span>Data Noise</span>
-            <span id="valNoise">0.15</span>
-          </div>
-          <input type="range" id="rngNoise" min="0.0" max="0.4" value="0.15" step="0.05" oninput="document.getElementById('valNoise').textContent=parseFloat(this.value).toFixed(2)" onchange="resetDataset()">
-        </div>
-
-        <div class="btn-row">
-          <button class="btn btn-primary" id="btnTrain" onclick="toggleTraining()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            <span id="btnTrainText">Train Network</span>
-          </button>
-          <button class="btn" onclick="stepSingleEpoch()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            Step 1 Epoch
-          </button>
-        </div>
-
-        <div class="btn-row">
-          <button class="btn" onclick="resetNetworkWeights()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
-            Reset Weights
-          </button>
-          <button class="btn btn-emerald" onclick="runNumericalGradCheck()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            Verify Gradients
-          </button>
-        </div>
-      </div>
-
-      <!-- Center Column: Real-time 2D Decision Boundary Canvas -->
-      <div class="panel">
-        <div class="panel-header">
-          <div class="panel-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-            2D Decision Boundary
-          </div>
-          <div style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted);">
-            Click canvas to probe test coordinates
-          </div>
-        </div>
-
-        <div class="canvas-container">
-          <canvas id="decisionCanvas" width="480" height="480"></canvas>
-          <div class="canvas-overlay-hud" id="hudCoords">
-            Probe: <span>Hover or Click Canvas</span>
-          </div>
-        </div>
-
-        <div class="canvas-legend">
-          <span><span class="legend-dot" style="background:#38bdf8;"></span>Class 0 (Target = 0)</span>
-          <span><span class="legend-dot" style="background:#f43f5e;"></span>Class 1 (Target = 1)</span>
-          <span><span class="legend-dot" style="background:#fbbf24; border: 1px solid #fff;"></span>Decision Border (P = 0.5)</span>
-        </div>
-      </div>
-
-      <!-- Right Column: Live Training Analytics -->
-      <div class="panel side-metrics">
-        <div class="panel-header">
-          <div class="panel-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-            Live Analytics
-          </div>
-          <span class="badge" id="lblEpoch">Epoch 0</span>
-        </div>
-
-        <!-- Metric 1: Loss Curve -->
-        <div class="metric-card">
-          <div class="metric-stat-row">
-            <span class="metric-title">BCE Loss</span>
-            <span class="metric-value" id="valLoss" style="color:var(--amber);">0.6931</span>
-          </div>
-          <svg class="metric-svg" id="svgLoss"></svg>
-        </div>
-
-        <!-- Metric 2: Classification Accuracy -->
-        <div class="metric-card">
-          <div class="metric-stat-row">
-            <span class="metric-title">Accuracy</span>
-            <span class="metric-value" id="valAcc" style="color:var(--emerald);">50.0%</span>
-          </div>
-          <svg class="metric-svg" id="svgAcc"></svg>
-        </div>
-
-        <!-- Metric 3: Layer Gradient Norms (Vanishing/Exploding Gradient Detection) -->
-        <div class="metric-card">
-          <div class="metric-stat-row">
-            <span class="metric-title">Layer Gradient L2 Norms</span>
-            <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted);" id="valGrads">
-              ‖dW1‖: 0.00e0 · ‖dW2‖: 0.00e0
-            </span>
-          </div>
-          <div style="font-family:var(--font-mono); font-size:11px; display:flex; justify-content:space-between; margin-top:6px;">
-            <span style="color:#38bdf8;">Layer 1 (Input→Hidden)</span>
-            <span id="barW1Val">0.000</span>
-          </div>
-          <div style="height:6px; background:#1c2333; border-radius:3px; margin:4px 0 10px; overflow:hidden;">
-            <div id="barW1" style="height:100%; width:0%; background:#38bdf8; transition: width 0.1s;"></div>
-          </div>
-
-          <div style="font-family:var(--font-mono); font-size:11px; display:flex; justify-content:space-between;">
-            <span style="color:#a855f7;">Layer 2 (Hidden→Output)</span>
-            <span id="barW2Val">0.000</span>
-          </div>
-          <div style="height:6px; background:#1c2333; border-radius:3px; margin:4px 0 0; overflow:hidden;">
-            <div id="barW2" style="height:100%; width:0%; background:#a855f7; transition: width 0.1s;"></div>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </div>
-
-
-  <!-- ========================================================================= -->
-  <!-- TAB 2: INTERACTIVE COMPUTATION GRAPH & SIGNAL TRACE -->
-  <!-- ========================================================================= -->
-  <div id="tab-graph" class="tab-content">
-    <div class="arch-view-wrapper">
-      <div class="svg-graph-box">
-        <div class="panel-header">
-          <div class="panel-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-            Dynamic Architecture & Signal Flow
-          </div>
-          <div class="btn-row" style="margin:0; width:auto; display:flex; gap:8px;">
-            <button class="btn" onclick="animateSignal('forward')">
-              <span class="legend-dot" style="background:var(--cyan);"></span> Pulse Forward
-            </button>
-            <button class="btn" onclick="animateSignal('backward')">
-              <span class="legend-dot" style="background:var(--amber);"></span> Pulse Backward
-            </button>
-          </div>
-        </div>
-
-        <svg id="graphSvg" viewBox="0 0 800 450"></svg>
-
-        <div class="canvas-legend">
-          <span><span class="legend-dot" style="background:var(--cyan);"></span>Positive Weight (w &gt; 0)</span>
-          <span><span class="legend-dot" style="background:var(--rose);"></span>Negative Weight (w &lt; 0)</span>
-          <span>Thickness = Absolute Weight Magnitude |w|</span>
-        </div>
-      </div>
-
-      <!-- Node/Synapse Realtime Inspector -->
-      <div class="inspector-card">
-        <div class="panel-header">
-          <div class="panel-title" id="inspectTitle">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            Inspector
-          </div>
-        </div>
-
-        <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px;" id="inspectHint">
-          Click any neuron or synapse in the graph to inspect its live numerical tensor values and chain rule derivation.
-        </p>
-
-        <div id="inspectData">
-          <div class="inspect-row"><span class="k">Target</span><span class="v" id="insTarget">Neuron h1</span></div>
-          <div class="inspect-row"><span class="k">Pre-activation (z)</span><span class="v" id="insZ">+0.482</span></div>
-          <div class="inspect-row"><span class="k">Activation (a)</span><span class="v" id="insA">+0.448</span></div>
-          <div class="inspect-row"><span class="k">Bias (b)</span><span class="v" id="insB">-0.050</span></div>
-          <div class="inspect-row"><span class="k">Local Gradient (∂L/∂z)</span><span class="v" id="insGrad" style="color:var(--amber);">-0.031</span></div>
-        </div>
-
-        <div class="inspect-formula" id="insFormula">
-          z = ∑ (w_i · x_i) + b<br>
-          a = tanh(z)<br>
-          ∂L/∂z = (∂L/∂a) · (1 - a²)
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ========================================================================= -->
-  <!-- TAB 3: STEP-BY-STEP BACKPROPAGATION MICRO-DEBUGGER -->
-  <!-- ========================================================================= -->
-  <div id="tab-debugger" class="tab-content">
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-          Micro-Step Backpropagation Engine
-        </div>
-        <div style="display:flex; gap:8px;">
-          <button class="btn" onclick="prevMicroStep()">← Prev Step</button>
-          <button class="btn btn-primary" onclick="nextMicroStep()">Next Step →</button>
-          <button class="btn" onclick="resetMicroStep()">Reset</button>
-        </div>
-      </div>
-
-      <!-- Pipeline Step Indicators -->
-      <div class="stepper-pipeline" id="microPipeline">
-        <div class="step-pill active" onclick="gotoMicroStep(0)">1. Linear Z1</div>
-        <div class="step-pill" onclick="gotoMicroStep(1)">2. Hidden Act A1</div>
-        <div class="step-pill" onclick="gotoMicroStep(2)">3. Output ŷ &amp; Loss</div>
-        <div class="step-pill" onclick="gotoMicroStep(3)">4. Output Grad δ2</div>
-        <div class="step-pill" onclick="gotoMicroStep(4)">5. Hidden Grad &amp; Update</div>
-      </div>
-
-      <!-- Step Content Display -->
-      <div class="step-detail-card">
-        <div class="step-detail-title" id="microTitle">
-          Step 1: Input to Hidden Linear Combination (Z1 = X · W1 + b1)
-        </div>
-        <div class="step-detail-body" id="microDesc">
-          The input vector is projected into the hidden subspace through a linear transformation. Each neuron in the hidden layer computes the dot product of input coordinates with its column of weight matrix W1, then adds its scalar bias b1.
-        </div>
-        <div class="step-math-box" id="microMath">
-          Z1 = [x1, x2] @ W1 + b1<br>
-          For neuron 1: z_1 = (0.600 · 0.350) + (0.900 · 0.100) + 0.050 = 0.350
-        </div>
-      </div>
-
-      <div class="panel" style="background:var(--bg-card); border-radius:10px;">
-        <div class="panel-title" style="font-size:13px; margin-bottom:10px;">
-          Live Tensor Snapshot for Current Step
-        </div>
-        <div id="microTensorTable" style="font-family:var(--font-mono); font-size:12px; color:var(--text-secondary);">
-          Loading tensor cache...
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-
-  <!-- ========================================================================= -->
-  <!-- TAB 4: MATRIX & TENSOR INSPECTOR -->
-  <!-- ========================================================================= -->
-  <div id="tab-matrices" class="tab-content">
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg>
-          Parameter Tensors &amp; Exact Analytical Gradients
-        </div>
-        <button class="btn btn-emerald" onclick="runNumericalGradCheck()">
-          <span class="legend-dot" style="background:var(--emerald);"></span> Run Finite-Diff Verification
+        <button class="btn btn-primary" onclick="resetAndTrain()">
+          🚀 Retrain Network
         </button>
       </div>
 
-      <div class="matrix-grid">
-        <div class="matrix-box">
-          <div class="matrix-title"><span>W1 (Input → Hidden)</span><span id="w1Shape">Shape: (2, 8)</span></div>
-          <div id="tableW1"></div>
+      <!-- Right Visuals -->
+      <div>
+        <div class="viz-row">
+          <!-- Decision Boundary -->
+          <div class="panel">
+            <div class="panel-title" id="titleBoundary">Decision Boundary (Epoch 0)</div>
+            <div class="canvas-box">
+              <canvas id="decisionCanvas" width="380" height="380"></canvas>
+            </div>
+            <div class="legend" style="justify-content:center;">
+              <span><span class="swatch" style="background:#38bdf8; height:8px; width:8px; border-radius:50%;"></span>Class 0</span>
+              <span><span class="swatch" style="background:#f43f5e; height:8px; width:8px; border-radius:50%;"></span>Class 1</span>
+              <span><span class="swatch" style="background:#ffffff; height:2px; width:14px;"></span>Decision Threshold (P = 0.5)</span>
+            </div>
+          </div>
+
+          <!-- Training Curves -->
+          <div class="panel">
+            <div class="panel-title">Training Dynamics</div>
+
+            <div class="stat-card">
+              <div class="stat-row">
+                <span>Binary Cross-Entropy Loss</span>
+                <span class="v" id="lblLossVal" style="color:var(--amber);">0.6931</span>
+              </div>
+              <svg class="chart-svg" id="svgLoss"></svg>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-row">
+                <span>Layer 1 Gradient Norm (‖dW1‖)</span>
+                <span class="v" id="lblGradW1" style="color:var(--cyan);">0.000</span>
+              </div>
+              <div style="height:6px; background:#1e2433; border-radius:3px; overflow:hidden; margin-top:6px;">
+                <div id="barGradW1" style="height:100%; width:0%; background:var(--cyan); transition: width 0.15s;"></div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-row">
+                <span>Layer 2 Gradient Norm (‖dW2‖)</span>
+                <span class="v" id="lblGradW2" style="color:var(--rose);">0.000</span>
+              </div>
+              <div style="height:6px; background:#1e2433; border-radius:3px; overflow:hidden; margin-top:6px;">
+                <div id="barGradW2" style="height:100%; width:0%; background:var(--rose); transition: width 0.15s;"></div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="matrix-box">
-          <div class="matrix-title"><span>∂L/∂W1 (Analytical Gradient)</span><span style="color:var(--amber);">dL/dW1</span></div>
-          <div id="tableGradW1"></div>
-        </div>
-
-        <div class="matrix-box">
-          <div class="matrix-title"><span>W2 (Hidden → Output)</span><span id="w2Shape">Shape: (8, 1)</span></div>
-          <div id="tableW2"></div>
-        </div>
-
-        <div class="matrix-box">
-          <div class="matrix-title"><span>∂L/∂W2 (Analytical Gradient)</span><span style="color:var(--amber);">dL/dW2</span></div>
-          <div id="tableGradW2"></div>
+        <!-- Epoch Scrubber Slider -->
+        <div class="scrubber-card">
+          <div class="stat-row">
+            <span>Scrub to Epoch</span>
+            <span class="v" id="lblScrubEpoch">0 / 150</span>
+          </div>
+          <input type="range" id="rngScrub" min="0" max="150" value="0" style="margin-top:6px;" oninput="onScrub(parseInt(this.value, 10))">
         </div>
       </div>
 
-      <div class="inspect-formula" style="margin-top:20px;">
-        <b>Verification Theorem:</b> Analytical backprop computes exact Jacobian-vector products. Central finite difference gradient checking satisfies:
-        <br>
-        <code>‖∇_analytical - ∇_numerical‖ / (‖∇_analytical‖ + ‖∇_numerical‖) &lt; 1e-7</code>
-      </div>
     </div>
   </div>
 
 
   <!-- ========================================================================= -->
-  <!-- TAB 5: INTERVIEW DEEP DIVE & TECHNICAL CHEAT SHEET -->
+  <!-- TAB 2: WATCH IT LEARN (ANIMATED STEP-BY-STEP) -->
   <!-- ========================================================================= -->
-  <div id="tab-interview" class="tab-content">
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-          The Backpropagation Technical Interview Masterclass
-        </div>
-        <span class="badge" style="color:var(--cyan); border-color:rgba(56,189,248,0.3);">
-          Essential Questions Asked at Top Tech &amp; AI Labs
-        </span>
+  <div id="tab-animated" class="tab-panel">
+    <div class="scope-frame">
+      <svg viewBox="0 0 700 400" id="animSvg">
+        <defs>
+          <radialGradient id="nodeGrad" cx="35%" cy="30%" r="75%">
+            <stop offset="0%" stop-color="#1e2433"/>
+            <stop offset="100%" stop-color="#11141c"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Connections -->
+        <line class="edge" id="e-x1h1" x1="90" y1="130" x2="340" y2="90" stroke="#333c52" stroke-width="2"/>
+        <line class="edge" id="e-x1h2" x1="90" y1="130" x2="340" y2="300" stroke="#333c52" stroke-width="2"/>
+        <line class="edge" id="e-x2h1" x1="90" y1="270" x2="340" y2="90" stroke="#333c52" stroke-width="2"/>
+        <line class="edge" id="e-x2h2" x1="90" y1="270" x2="340" y2="300" stroke="#333c52" stroke-width="2"/>
+        <line class="edge" id="e-h1y"  x1="360" y1="90" x2="600" y2="195" stroke="#333c52" stroke-width="2"/>
+        <line class="edge" id="e-h2y"  x1="360" y1="300" x2="600" y2="195" stroke="#333c52" stroke-width="2"/>
+
+        <text class="edge-label" id="lbl-x1h1" x="200" y="100"></text>
+        <text class="edge-label" id="lbl-x1h2" x="200" y="225"></text>
+        <text class="edge-label" id="lbl-x2h1" x="200" y="170"></text>
+        <text class="edge-label" id="lbl-x2h2" x="200" y="295"></text>
+        <text class="edge-label" id="lbl-h1y"  x="465" y="130"></text>
+        <text class="edge-label" id="lbl-h2y"  x="465" y="265"></text>
+
+        <!-- Nodes -->
+        <circle class="node" id="n-x1" cx="90" cy="130" r="26" fill="url(#nodeGrad)" stroke="#38bdf8" stroke-width="2"/>
+        <circle class="node" id="n-x2" cx="90" cy="270" r="26" fill="url(#nodeGrad)" stroke="#38bdf8" stroke-width="2"/>
+        <circle class="node" id="n-h1" cx="350" cy="90" r="26" fill="url(#nodeGrad)" stroke="#34d399" stroke-width="2"/>
+        <circle class="node" id="n-h2" cx="350" cy="300" r="26" fill="url(#nodeGrad)" stroke="#34d399" stroke-width="2"/>
+        <circle class="node" id="n-y"  cx="610" cy="195" r="28" fill="url(#nodeGrad)" stroke="#fbbf24" stroke-width="2"/>
+
+        <text class="node-label" x="90" y="95" text-anchor="middle">x1</text>
+        <text class="node-label" x="90" y="235" text-anchor="middle">x2</text>
+        <text class="node-label" x="350" y="55" text-anchor="middle">h1 (tanh)</text>
+        <text class="node-label" x="350" y="265" text-anchor="middle">h2 (tanh)</text>
+        <text class="node-label" x="610" y="155" text-anchor="middle">ŷ (sigmoid)</text>
+
+        <text class="node-value" id="v-x1" x="90" y="135" text-anchor="middle"></text>
+        <text class="node-value" id="v-x2" x="90" y="275" text-anchor="middle"></text>
+        <text class="node-value" id="v-h1" x="350" y="95" text-anchor="middle"></text>
+        <text class="node-value" id="v-h2" x="350" y="305" text-anchor="middle"></text>
+        <text class="node-value" id="v-y"  x="610" y="201" text-anchor="middle"></text>
+
+        <text class="node-label" id="lossText" x="610" y="248" text-anchor="middle" fill="#fbbf24" font-weight="600" font-size="12" font-family="JetBrains Mono, monospace"></text>
+
+        <!-- Signal Animation Dots -->
+        <circle class="dot" id="dot-x1h1" r="5" fill="#38bdf8"/>
+        <circle class="dot" id="dot-x1h2" r="5" fill="#38bdf8"/>
+        <circle class="dot" id="dot-x2h1" r="5" fill="#38bdf8"/>
+        <circle class="dot" id="dot-x2h2" r="5" fill="#38bdf8"/>
+        <circle class="dot" id="dot-h1y"  r="5" fill="#38bdf8"/>
+        <circle class="dot" id="dot-h2y"  r="5" fill="#38bdf8"/>
+      </svg>
+
+      <div class="legend">
+        <span><span class="swatch" style="background:#38bdf8;"></span>Forward Pass (Data)</span>
+        <span><span class="swatch" style="background:#fbbf24;"></span>Backward Pass (Gradients)</span>
+        <span><span class="swatch" style="background:#38bdf8; height:8px; width:8px; border-radius:50%;"></span>Positive Weight</span>
+        <span><span class="swatch" style="background:#f43f5e; height:8px; width:8px; border-radius:50%;"></span>Negative Weight</span>
       </div>
+    </div>
 
-      <div class="qa-list">
+    <!-- Pipeline steps -->
+    <div class="pipeline">
+      <div class="pipeline-step" id="pipe-0">1. Init</div>
+      <div class="pipeline-step" id="pipe-1">2. Forward</div>
+      <div class="pipeline-step" id="pipe-2">3. Loss</div>
+      <div class="pipeline-step" id="pipe-3">4. Backward</div>
+      <div class="pipeline-step" id="pipe-4">5. Update</div>
+    </div>
 
-        <!-- Question 1 -->
-        <div class="qa-item open">
-          <div class="qa-header" onclick="toggleQA(this)">
-            <div>
-              <span class="q-tag">Question 1</span>
-              Why does Binary Cross-Entropy (BCE) combined with a Sigmoid output produce the clean gradient <code>(ŷ - y)</code>?
-            </div>
-            <span class="qa-chevron">▼</span>
-          </div>
-          <div class="qa-body">
-            <p>
-              When candidates write backprop from scratch, a common rookie mistake is computing <code>dL/dŷ</code> and <code>dŷ/dz</code> separately and risking numerical division by zero. In reality, the mathematics cancel out perfectly:
-            </p>
-            <div class="qa-callout">
-              <b>1. Loss function:</b> \(L(y, \hat{y}) = - [ y \ln \hat{y} + (1 - y) \ln (1 - \hat{y}) ]\)<br>
-              <b>2. Derivative w.r.t prediction:</b> \(\frac{\partial L}{\partial \hat{y}} = - \frac{y}{\hat{y}} + \frac{1 - y}{1 - \hat{y}} = \frac{\hat{y} - y}{\hat{y}(1 - \hat{y})}\)<br>
-              <b>3. Sigmoid derivative:</b> \(\frac{\partial \hat{y}}{\partial z_2} = \sigma(z_2)(1 - \sigma(z_2)) = \hat{y}(1 - \hat{y})\)<br>
-              <b>4. By Chain Rule:</b> \(\frac{\partial L}{\partial z_2} = \frac{\partial L}{\partial \hat{y}} \cdot \frac{\partial \hat{y}}{\partial z_2} = \frac{\hat{y} - y}{\hat{y}(1 - \hat{y})} \cdot \hat{y}(1 - \hat{y}) = \mathbf{\hat{y} - y}\)
-            </div>
-            <p>
-              The denominator term \(\hat{y}(1 - \hat{y})\) cancels the exact derivative of the sigmoid function! This prevents gradient vanishing at the output layer when the network is wrong.
-            </p>
-          </div>
-        </div>
+    <!-- Explanation Box -->
+    <div class="step-box">
+      <div class="step-title" id="animStepTitle">Step 1 / 5 — Initialize Weights</div>
+      <div class="step-body" id="animStepBody">Weights set to small random values. Click "Next Step" to send an example through.</div>
+    </div>
 
-        <!-- Question 2 -->
-        <div class="qa-item">
-          <div class="qa-header" onclick="toggleQA(this)">
-            <div>
-              <span class="q-tag">Question 2</span>
-              What is the Vanishing Gradient Problem, and how can we visually identify it in this visualizer?
-            </div>
-            <span class="qa-chevron">▼</span>
-          </div>
-          <div class="qa-body">
-            <p>
-              The derivative of the standard Sigmoid function \(\sigma'(z) = \sigma(z)(1-\sigma(z))\) has a maximum value of <b>0.25</b> (at \(z=0\)). For Tanh, \(\tanh'(z) = 1 - \tanh^2(z)\) has a maximum of <b>1.0</b>, but decays exponentially toward 0 as \(|z| > 2\).
-            </p>
-            <p>
-              By the multivariate chain rule:
-              \[
-              \frac{\partial L}{\partial W_1} = X^T \left( (\delta_2 W_2^T) \odot f'(Z_1) \right)
-              \]
-              In a network with multiple layers, gradients are multiplied by \(\prod_{l} W_l^T f'(Z_l)\). If activations saturate, the gradients shrink exponentially with layer depth, meaning earlier layers learn virtually nothing.
-            </p>
-            <div class="qa-callout">
-              <b>How to demonstrate in this app:</b> Look at the <b>Layer Gradient L2 Norms</b> card in Tab 1. If you switch activation to <i>Sigmoid</i> with a high initial learning rate or large weights, you will observe \(\|dW_1\| \ll \|dW_2\|\), proving that earlier layers stop receiving gradient signals!
-            </div>
-          </div>
-        </div>
-
-        <!-- Question 3 -->
-        <div class="qa-item">
-          <div class="qa-header" onclick="toggleQA(this)">
-            <div>
-              <span class="q-tag">Question 3</span>
-              What is the "Dying ReLU" problem, and why was Leaky ReLU introduced?
-            </div>
-            <span class="qa-chevron">▼</span>
-          </div>
-          <div class="qa-body">
-            <p>
-              The derivative of ReLU is:
-              \[
-              \text{ReLU}'(z) = \begin{cases} 1 & \text{if } z > 0 \\ 0 & \text{if } z \le 0 \end{cases}
-              \]
-              If a neuron's weights get updated such that \(z = X W_1 + b_1 \le 0\) for all training examples in the dataset, its gradient is identically <b>0</b>. Because the gradient is zero, gradient descent will never change its weights again: the neuron is permanently dead.
-            </p>
-            <p>
-              <b>Leaky ReLU</b> fixes this by introducing a small slope \(\alpha \approx 0.01\) for \(z \le 0\), ensuring a non-zero gradient \(\frac{\partial L}{\partial z} = \alpha \cdot \frac{\partial L}{\partial a}\) always flows backward.
-            </p>
-          </div>
-        </div>
-
-        <!-- Question 4 -->
-        <div class="qa-item">
-          <div class="qa-header" onclick="toggleQA(this)">
-            <div>
-              <span class="q-tag">Question 4</span>
-              Why is weight initialization critical? What happens if all weights are initialized to zeros?
-            </div>
-            <span class="qa-chevron">▼</span>
-          </div>
-          <div class="qa-body">
-            <p>
-              If all weights \(W_1\) and \(W_2\) are initialized to zero:
-            </p>
-            <ol style="margin-left:20px; margin-top:8px;">
-              <li>All hidden units receive identical inputs \(Z_1 = 0 + b_1 = 0\).</li>
-              <li>All hidden units output identical activations \(A_1 = f(0)\).</li>
-              <li>During backprop, all hidden units receive identical gradients: \(\frac{\partial L}{\partial Z_{1, i}} = \frac{\partial L}{\partial Z_{1, j}}\).</li>
-              <li>Consequently, all hidden units update to identical values. They never break symmetry, making the entire hidden layer behave as if it had only a single neuron!</li>
-            </ol>
-            <div class="qa-callout">
-              <b>Industry Solution:</b> Xavier/Glorot initialization for Tanh (\(\sigma = \sqrt{2 / (n_{in} + n_{out})}\)) and He/Kaiming initialization for ReLU (\(\sigma = \sqrt{2 / n_{in}}\)) preserve variance across forward and backward passes.
-            </div>
-          </div>
-        </div>
-
-        <!-- Question 5 -->
-        <div class="qa-item">
-          <div class="qa-header" onclick="toggleQA(this)">
-            <div>
-              <span class="q-tag">Question 5</span>
-              How does Numerical Gradient Checking mathematically validate analytical backpropagation?
-            </div>
-            <span class="qa-chevron">▼</span>
-          </div>
-          <div class="qa-body">
-            <p>
-              In production machine learning systems, autograd engines (like PyTorch or JAX) are rigorously verified using central finite differences:
-              \[
-              \nabla_{\text{numerical}} \theta_i = \frac{L(\theta_i + \epsilon) - L(\theta_i - \epsilon)}{2\epsilon}
-              \]
-              We compare this against our analytical chain-rule gradient \(\nabla_{\text{analytical}}\) using relative error:
-              \[
-              \text{Relative Error} = \frac{\|\nabla_{\text{analytical}} - \nabla_{\text{numerical}}\|_2}{\|\nabla_{\text{analytical}}\|_2 + \|\nabla_{\text{numerical}}\|_2}
-              \]
-              If the error is less than \(10^{-7}\), the analytical gradient implementation is mathematically verified down to machine floating-point precision. Click the <b>Verify Gradients</b> button above to see this live!
-            </p>
-          </div>
-        </div>
-
-      </div>
+    <!-- Stepper Controls -->
+    <div class="anim-controls">
+      <button class="btn btn-primary" id="btnNextStep" onclick="nextAnimStep()">Next Step →</button>
+      <button class="btn" id="btnAutoPlay" onclick="toggleAutoPlay()">Auto-Play</button>
+      <button class="btn" onclick="resetAnim()">Reset</button>
+      <div class="epoch-badge">Epoch: <b id="lblAnimEpoch">1</b></div>
     </div>
   </div>
 
 </div>
 
 <!-- ========================================================================= -->
-<!-- JAVASCRIPT: PURE FROM-SCRATCH NEURAL NETWORK & VISUALIZATION ENGINE -->
+<!-- JAVASCRIPT LOGIC (CLEAN, MODULAR, NO EXTERNAL DEPENDENCIES) -->
 <!-- ========================================================================= -->
 <script>
-// --- Global Dataset & Network State ---
-let X_data = [];
-let y_data = [];
-let net = null;
-let isTraining = false;
-let trainAnimFrame = null;
-let currentEpoch = 0;
-let lossHistory = [];
-let accHistory = [];
-let gradW1History = [];
-let gradW2History = [];
+// --- Navigation ---
+function setTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
 
-// Micro-step debugger state
-let microStepIndex = 0;
-let microSample = { x1: 0.6, x2: 0.9, y: 1 };
-let microCache = {};
-
-// --- Math & Activation Functions ---
-const MathUtils = {
-  sigmoid: (z) => 1.0 / (1.0 + Math.exp(-Math.max(-500, Math.min(500, z)))),
-  sigmoidDeriv: (a) => a * (1.0 - a),
-  tanh: (z) => Math.tanh(z),
-  tanhDeriv: (a) => 1.0 - a * a,
-  relu: (z) => Math.max(0.0, z),
-  reluDeriv: (a) => a > 0 ? 1.0 : 0.0,
-  leakyRelu: (z) => z > 0 ? z : 0.01 * z,
-  leakyReluDeriv: (a) => a > 0 ? 1.0 : 0.01,
-  bceLoss: (yTrue, yPred) => {
-    const eps = 1e-12;
-    const p = Math.max(eps, Math.min(1.0 - eps, yPred));
-    return -(yTrue * Math.log(p) + (1.0 - yTrue) * Math.log(1.0 - p));
-  }
-};
-
-// --- Neural Network Class (Pure JS Mirror of nn.py) ---
-class AnalyticalNet {
-  constructor(inputDim, hiddenDim, activationName, lr = 0.1) {
-    this.inputDim = inputDim;
-    this.hiddenDim = hiddenDim;
-    this.activationName = activationName;
-    this.lr = lr;
-    this.t = 0;
-
-    // Xavier/He initialization
-    const std1 = activationName.includes("relu") ? Math.sqrt(2.0 / inputDim) : Math.sqrt(2.0 / (inputDim + hiddenDim));
-    const std2 = activationName.includes("relu") ? Math.sqrt(2.0 / hiddenDim) : Math.sqrt(2.0 / (hiddenDim + 1));
-
-    // W1: [inputDim, hiddenDim]
-    this.W1 = [];
-    for (let i = 0; i < inputDim; i++) {
-      this.W1[i] = [];
-      for (let j = 0; j < hiddenDim; j++) {
-        this.W1[i][j] = (Math.random() * 2 - 1) * std1;
-      }
-    }
-    // b1: [hiddenDim]
-    this.b1 = new Array(hiddenDim).fill(0.0);
-
-    // W2: [hiddenDim, 1]
-    this.W2 = [];
-    for (let j = 0; j < hiddenDim; j++) {
-      this.W2[j] = [(Math.random() * 2 - 1) * std2];
-    }
-    // b2: scalar
-    this.b2 = 0.0;
-
-    // Adam moment buffers
-    this.mW1 = this.zerosLike2D(this.W1);
-    this.vW1 = this.zerosLike2D(this.W1);
-    this.mb1 = new Array(hiddenDim).fill(0.0);
-    this.vb1 = new Array(hiddenDim).fill(0.0);
-    this.mW2 = this.zerosLike2D(this.W2);
-    this.vW2 = this.zerosLike2D(this.W2);
-    this.mb2 = 0.0;
-    this.vb2 = 0.0;
-  }
-
-  zerosLike2D(arr) {
-    return arr.map(row => new Array(row.length).fill(0.0));
-  }
-
-  getActivation() {
-    switch (this.activationName) {
-      case "relu": return [MathUtils.relu, MathUtils.reluDeriv];
-      case "leaky_relu": return [MathUtils.leakyRelu, MathUtils.leakyReluDeriv];
-      case "sigmoid": return [MathUtils.sigmoid, MathUtils.sigmoidDeriv];
-      default: return [MathUtils.tanh, MathUtils.tanhDeriv];
-    }
-  }
-
-  // Single example forward pass
-  forwardSample(x1, x2) {
-    const [actFn] = this.getActivation();
-    const z1 = new Array(this.hiddenDim);
-    const a1 = new Array(this.hiddenDim);
-
-    for (let j = 0; j < this.hiddenDim; j++) {
-      z1[j] = x1 * this.W1[0][j] + x2 * this.W1[1][j] + this.b1[j];
-      a1[j] = actFn(z1[j]);
-    }
-
-    let z2 = this.b2;
-    for (let j = 0; j < this.hiddenDim; j++) {
-      z2 += a1[j] * this.W2[j][0];
-    }
-    const a2 = MathUtils.sigmoid(z2);
-    return { z1, a1, z2, a2 };
-  }
-
-  // Batch forward pass & loss
-  forwardBatch(X, y) {
-    const N = X.length;
-    let totalLoss = 0.0;
-    let correct = 0;
-    const caches = [];
-
-    for (let i = 0; i < N; i++) {
-      const cache = this.forwardSample(X[i][0], X[i][1]);
-      caches.push(cache);
-      totalLoss += MathUtils.bceLoss(y[i], cache.a2);
-      if ((cache.a2 >= 0.5 ? 1 : 0) === y[i]) correct++;
-    }
-
-    return {
-      loss: totalLoss / N,
-      accuracy: correct / N,
-      caches
-    };
-  }
-
-  // Batch backward pass (Manual Multivariate Chain Rule)
-  backwardBatch(X, y, caches) {
-    const N = X.length;
-    const [, actDeriv] = this.getActivation();
-
-    // Initialize gradient accumulators
-    const dW1 = this.zerosLike2D(this.W1);
-    const db1 = new Array(this.hiddenDim).fill(0.0);
-    const dW2 = this.zerosLike2D(this.W2);
-    let db2 = 0.0;
-
-    for (let i = 0; i < N; i++) {
-      const x1 = X[i][0];
-      const x2 = X[i][1];
-      const yTrue = y[i];
-      const { z1, a1, a2 } = caches[i];
-
-      // Output error: dL/dZ2 = (A2 - y) / N
-      const dZ2 = (a2 - yTrue) / N;
-
-      // Layer 2 gradients: dW2 = A1^T · dZ2
-      for (let j = 0; j < this.hiddenDim; j++) {
-        dW2[j][0] += a1[j] * dZ2;
-      }
-      db2 += dZ2;
-
-      // Hidden layer error: dL/dZ1 = (dZ2 · W2^T) ⊙ actDeriv(A1)
-      for (let j = 0; j < this.hiddenDim; j++) {
-        const dA1_j = dZ2 * this.W2[j][0];
-        const dZ1_j = dA1_j * actDeriv(a1[j]);
-
-        dW1[0][j] += x1 * dZ1_j;
-        dW1[1][j] += x2 * dZ1_j;
-        db1[j] += dZ1_j;
-      }
-    }
-
-    // Compute L2 norms
-    let norm1 = 0.0, norm2 = 0.0;
-    for (let i = 0; i < 2; i++) {
-      for (let j = 0; j < this.hiddenDim; j++) {
-        norm1 += dW1[i][j] ** 2;
-      }
-    }
-    for (let j = 0; j < this.hiddenDim; j++) {
-      norm2 += dW2[j][0] ** 2;
-    }
-
-    return {
-      dW1, db1, dW2, db2,
-      normW1: Math.sqrt(norm1),
-      normW2: Math.sqrt(norm2)
-    };
-  }
-
-  // Optimizer update (SGD, Momentum, Adam)
-  applyGradients(grads, optimizerName) {
-    this.t++;
-    const lr = parseFloat(document.getElementById("rngLr").value);
-
-    if (optimizerName === "adam") {
-      const b1 = 0.9, b2 = 0.999, eps = 1e-8;
-
-      // Update W1
-      for (let i = 0; i < 2; i++) {
-        for (let j = 0; j < this.hiddenDim; j++) {
-          const g = grads.dW1[i][j];
-          this.mW1[i][j] = b1 * this.mW1[i][j] + (1 - b1) * g;
-          this.vW1[i][j] = b2 * this.vW1[i][j] + (1 - b2) * (g * g);
-          const mHat = this.mW1[i][j] / (1 - Math.pow(b1, this.t));
-          const vHat = this.vW1[i][j] / (1 - Math.pow(b2, this.t));
-          this.W1[i][j] -= lr * mHat / (Math.sqrt(vHat) + eps);
-        }
-      }
-      // Update b1
-      for (let j = 0; j < this.hiddenDim; j++) {
-        const g = grads.db1[j];
-        this.mb1[j] = b1 * this.mb1[j] + (1 - b1) * g;
-        this.vb1[j] = b2 * this.vb1[j] + (1 - b2) * (g * g);
-        const mHat = this.mb1[j] / (1 - Math.pow(b1, this.t));
-        const vHat = this.vb1[j] / (1 - Math.pow(b2, this.t));
-        this.b1[j] -= lr * mHat / (Math.sqrt(vHat) + eps);
-      }
-      // Update W2
-      for (let j = 0; j < this.hiddenDim; j++) {
-        const g = grads.dW2[j][0];
-        this.mW2[j][0] = b1 * this.mW2[j][0] + (1 - b1) * g;
-        this.vW2[j][0] = b2 * this.vW2[j][0] + (1 - b2) * (g * g);
-        const mHat = this.mW2[j][0] / (1 - Math.pow(b1, this.t));
-        const vHat = this.vW2[j][0] / (1 - Math.pow(b2, this.t));
-        this.W2[j][0] -= lr * mHat / (Math.sqrt(vHat) + eps);
-      }
-      // Update b2
-      const gb2 = grads.db2;
-      this.mb2 = b1 * this.mb2 + (1 - b1) * gb2;
-      this.vb2 = b2 * this.vb2 + (1 - b2) * (gb2 * gb2);
-      const mHatB2 = this.mb2 / (1 - Math.pow(b1, this.t));
-      const vHatB2 = this.vb2 / (1 - Math.pow(b2, this.t));
-      this.b2 -= lr * mHatB2 / (Math.sqrt(vHatB2) + eps);
-
-    } else if (optimizerName === "momentum") {
-      const beta = 0.9;
-      for (let i = 0; i < 2; i++) {
-        for (let j = 0; j < this.hiddenDim; j++) {
-          this.mW1[i][j] = beta * this.mW1[i][j] + (1 - beta) * grads.dW1[i][j];
-          this.W1[i][j] -= lr * this.mW1[i][j];
-        }
-      }
-      for (let j = 0; j < this.hiddenDim; j++) {
-        this.mb1[j] = beta * this.mb1[j] + (1 - beta) * grads.db1[j];
-        this.b1[j] -= lr * this.mb1[j];
-        this.mW2[j][0] = beta * this.mW2[j][0] + (1 - beta) * grads.dW2[j][0];
-        this.W2[j][0] -= lr * this.mW2[j][0];
-      }
-      this.mb2 = beta * this.mb2 + (1 - beta) * grads.db2;
-      this.b2 -= lr * this.mb2;
-
-    } else {
-      // Standard SGD
-      for (let i = 0; i < 2; i++) {
-        for (let j = 0; j < this.hiddenDim; j++) {
-          this.W1[i][j] -= lr * grads.dW1[i][j];
-        }
-      }
-      for (let j = 0; j < this.hiddenDim; j++) {
-        this.b1[j] -= lr * grads.db1[j];
-        this.W2[j][0] -= lr * grads.dW2[j][0];
-      }
-      this.b2 -= lr * grads.db2;
-    }
+  if (tabName === 'explore') {
+    document.querySelectorAll('.tab-btn')[0].classList.add('active');
+    document.getElementById('tab-explore').classList.add('active');
+  } else {
+    document.querySelectorAll('.tab-btn')[1].classList.add('active');
+    document.getElementById('tab-animated').classList.add('active');
   }
 }
 
-// --- Synthetic Datasets Generator ---
-function generateDataset(name, noise = 0.15, count = 220) {
+function updateLabel(id, val) {
+  document.getElementById(id).textContent = val;
+}
+
+// =========================================================================
+// TAB 1: TRAIN & EXPLORE LOGIC
+// =========================================================================
+let trainingHistory = null;
+let currentDataset = null;
+
+function makeDataset(name, noise) {
   const X = [];
   const y = [];
-  const nEach = Math.floor(count / 2);
+  const n = 220;
+  const half = Math.floor(n / 2);
 
   if (name === "moons") {
-    for (let i = 0; i < nEach; i++) {
-      const theta = Math.PI * (i / nEach);
+    for (let i = 0; i < half; i++) {
+      const theta = Math.PI * (i / half);
       X.push([Math.cos(theta) + (Math.random() - 0.5) * noise * 2, Math.sin(theta) + (Math.random() - 0.5) * noise * 2]);
       y.push(0);
     }
-    for (let i = 0; i < nEach; i++) {
-      const theta = Math.PI * (i / nEach);
+    for (let i = 0; i < half; i++) {
+      const theta = Math.PI * (i / half);
       X.push([1 - Math.cos(theta) + (Math.random() - 0.5) * noise * 2, 1 - Math.sin(theta) - 0.5 + (Math.random() - 0.5) * noise * 2]);
       y.push(1);
     }
   } else if (name === "circles") {
-    for (let i = 0; i < nEach; i++) {
-      const theta = 2 * Math.PI * (i / nEach);
+    for (let i = 0; i < half; i++) {
+      const theta = 2 * Math.PI * (i / half);
       const r = 0.45 + (Math.random() - 0.5) * noise;
       X.push([r * Math.cos(theta), r * Math.sin(theta)]);
       y.push(0);
     }
-    for (let i = 0; i < nEach; i++) {
-      const theta = 2 * Math.PI * (i / nEach);
+    for (let i = 0; i < half; i++) {
+      const theta = 2 * Math.PI * (i / half);
       const r = 0.95 + (Math.random() - 0.5) * noise;
       X.push([r * Math.cos(theta), r * Math.sin(theta)]);
       y.push(1);
     }
-  } else if (name === "xor") {
-    for (let i = 0; i < count; i++) {
-      const x1 = (Math.random() * 2 - 1) * 1.2;
-      const x2 = (Math.random() * 2 - 1) * 1.2;
-      const label = (x1 * x2 > 0) ? 1 : 0;
-      X.push([x1 + (Math.random() - 0.5) * noise, x2 + (Math.random() - 0.5) * noise]);
-      y.push(label);
-    }
-  } else if (name === "spirals") {
-    for (let i = 0; i < nEach; i++) {
-      const r = (i / nEach) * 1.1;
-      const t = 1.75 * i / nEach * 2 * Math.PI;
-      X.push([r * Math.sin(t) + (Math.random() - 0.5) * noise, r * Math.cos(t) + (Math.random() - 0.5) * noise]);
-      y.push(0);
-      X.push([-r * Math.sin(t) + (Math.random() - 0.5) * noise, -r * Math.cos(t) + (Math.random() - 0.5) * noise]);
-      y.push(1);
-    }
   } else {
     // Blobs
-    for (let i = 0; i < nEach; i++) {
+    for (let i = 0; i < half; i++) {
       X.push([-0.65 + (Math.random() - 0.5) * (0.6 + noise * 2), -0.65 + (Math.random() - 0.5) * (0.6 + noise * 2)]);
       y.push(0);
     }
-    for (let i = 0; i < nEach; i++) {
+    for (let i = 0; i < half; i++) {
       X.push([0.65 + (Math.random() - 0.5) * (0.6 + noise * 2), 0.65 + (Math.random() - 0.5) * (0.6 + noise * 2)]);
       y.push(1);
     }
   }
 
-  // Normalize data to zero mean and unit variance
+  // Normalize
   let m0 = 0, m1 = 0;
   for (let p of X) { m0 += p[0]; m1 += p[1]; }
   m0 /= X.length; m1 /= X.length;
@@ -1487,180 +669,221 @@ function generateDataset(name, noise = 0.15, count = 220) {
     X[i][0] = (X[i][0] - m0) / s0;
     X[i][1] = (X[i][1] - m1) / s1;
   }
-
   return { X, y };
 }
 
-// --- App Initialization ---
-function init() {
-  resetDataset();
-  renderGraphSvg();
-  updateMicroStepUI();
-  updateMatrixTables();
-  if (window.renderMathInElement) {
-    renderMathInElement(document.body, { delimiters: [
-      {left: '$$', right: '$$', display: true},
-      {left: '\\[', right: '\\]', display: true},
-      {left: '\\(', right: '\\)', display: false},
-      {left: '$', right: '$', display: false}
-    ]});
+function trainFullModel(X, y, hiddenDim, actName, lr, epochs) {
+  // Xavier Init
+  const std1 = Math.sqrt(1.0 / 2);
+  const std2 = Math.sqrt(1.0 / hiddenDim);
+
+  let W1 = [];
+  for (let i = 0; i < 2; i++) {
+    W1[i] = [];
+    for (let j = 0; j < hiddenDim; j++) {
+      W1[i][j] = (Math.random() * 2 - 1) * std1;
+    }
   }
+  let b1 = new Array(hiddenDim).fill(0.0);
+
+  let W2 = [];
+  for (let j = 0; j < hiddenDim; j++) {
+    W2[j] = [(Math.random() * 2 - 1) * std2];
+  }
+  let b2 = 0.0;
+
+  const act = actName === "relu" ? (z => Math.max(0, z)) : (z => Math.tanh(z));
+  const actD = actName === "relu" ? (a => (a > 0 ? 1 : 0)) : (a => (1 - a*a));
+  const sigmoid = (z) => 1.0 / (1.0 + Math.exp(-Math.max(-500, Math.min(500, z))));
+
+  const history = {
+    loss: [],
+    W1: [], b1: [], W2: [], b2: [],
+    gradW1: [], gradW2: []
+  };
+
+  const N = X.length;
+
+  for (let ep = 0; ep < epochs; ep++) {
+    // 1. Forward
+    const z1List = [], a1List = [], a2List = [];
+    let epLoss = 0.0;
+
+    for (let i = 0; i < N; i++) {
+      const x1 = X[i][0], x2 = X[i][1];
+      const z1 = new Array(hiddenDim);
+      const a1 = new Array(hiddenDim);
+      for (let j = 0; j < hiddenDim; j++) {
+        z1[j] = x1 * W1[0][j] + x2 * W1[1][j] + b1[j];
+        a1[j] = act(z1[j]);
+      }
+      let z2 = b2;
+      for (let j = 0; j < hiddenDim; j++) {
+        z2 += a1[j] * W2[j][0];
+      }
+      const a2 = sigmoid(z2);
+      z1List.push(z1); a1List.push(a1); a2List.push(a2);
+
+      const eps = 1e-12;
+      const p = Math.max(eps, Math.min(1 - eps, a2));
+      epLoss += -(y[i] * Math.log(p) + (1 - y[i]) * Math.log(1 - p));
+    }
+    epLoss /= N;
+
+    // 2. Backward
+    const dW1 = [[], []];
+    for (let j = 0; j < hiddenDim; j++) { dW1[0][j] = 0; dW1[1][j] = 0; }
+    const db1 = new Array(hiddenDim).fill(0);
+    const dW2 = [];
+    for (let j = 0; j < hiddenDim; j++) { dW2[j] = [0]; }
+    let db2 = 0;
+
+    for (let i = 0; i < N; i++) {
+      const a2 = a2List[i];
+      const a1 = a1List[i];
+      const yTrue = y[i];
+      const x1 = X[i][0], x2 = X[i][1];
+
+      const dZ2 = (a2 - yTrue) / N;
+      for (let j = 0; j < hiddenDim; j++) {
+        dW2[j][0] += a1[j] * dZ2;
+      }
+      db2 += dZ2;
+
+      for (let j = 0; j < hiddenDim; j++) {
+        const dA1 = dZ2 * W2[j][0];
+        const dZ1 = dA1 * actD(a1[j]);
+        dW1[0][j] += x1 * dZ1;
+        dW1[1][j] += x2 * dZ1;
+        db1[j] += dZ1;
+      }
+    }
+
+    // Norms
+    let norm1 = 0, norm2 = 0;
+    for (let j = 0; j < hiddenDim; j++) {
+      norm1 += dW1[0][j]**2 + dW1[1][j]**2;
+      norm2 += dW2[j][0]**2;
+    }
+
+    // Record snapshot
+    history.loss.push(epLoss);
+    history.W1.push(W1.map(row => [...row]));
+    history.b1.push([...b1]);
+    history.W2.push(W2.map(row => [...row]));
+    history.b2.push(b2);
+    history.gradW1.push(Math.sqrt(norm1));
+    history.gradW2.push(Math.sqrt(norm2));
+
+    // 3. Update
+    for (let j = 0; j < hiddenDim; j++) {
+      W1[0][j] -= lr * dW1[0][j];
+      W1[1][j] -= lr * dW1[1][j];
+      b1[j] -= lr * db1[j];
+      W2[j][0] -= lr * dW2[j][0];
+    }
+    b2 -= lr * db2;
+  }
+
+  return history;
 }
 
-function resetDataset() {
+function resetAndTrain() {
   const dName = document.getElementById("selDataset").value;
   const noise = parseFloat(document.getElementById("rngNoise").value);
-  const data = generateDataset(dName, noise, 240);
-  X_data = data.X;
-  y_data = data.y;
-  initNetwork();
-}
-
-function initNetwork() {
-  const hiddenUnits = parseInt(document.getElementById("rngHidden").value, 10);
-  const act = document.getElementById("selActivation").value;
+  const hidden = parseInt(document.getElementById("rngHidden").value, 10);
+  const act = document.getElementById("selAct").value;
   const lr = parseFloat(document.getElementById("rngLr").value);
+  const epochs = parseInt(document.getElementById("rngEpochs").value, 10);
 
-  net = new AnalyticalNet(2, hiddenUnits, act, lr);
-  currentEpoch = 0;
-  lossHistory = [];
-  accHistory = [];
-  gradW1History = [];
-  gradW2History = [];
+  currentDataset = makeDataset(dName, noise);
+  trainingHistory = trainFullModel(currentDataset.X, currentDataset.y, hidden, act, lr, epochs);
 
-  // Initial evaluation
-  const evalInit = net.forwardBatch(X_data, y_data);
-  lossHistory.push(evalInit.loss);
-  accHistory.push(evalInit.accuracy);
+  const scrubber = document.getElementById("rngScrub");
+  scrubber.max = epochs - 1;
+  scrubber.value = epochs - 1;
 
-  updateUI(evalInit.loss, evalInit.accuracy, 0, 0);
-  drawDecisionBoundary();
-  renderGraphSvg();
-  updateMatrixTables();
+  onScrub(epochs - 1);
 }
 
-function resetNetworkWeights() {
-  initNetwork();
+function onScrub(epoch) {
+  if (!trainingHistory || !currentDataset) return;
+  const total = trainingHistory.loss.length;
+  epoch = Math.max(0, Math.min(total - 1, epoch));
+
+  document.getElementById("lblScrubEpoch").textContent = `Epoch ${epoch} / ${total - 1}`;
+  document.getElementById("titleBoundary").textContent = `Decision Boundary (Epoch ${epoch})`;
+  document.getElementById("lblLossVal").textContent = trainingHistory.loss[epoch].toFixed(4);
+
+  const g1 = trainingHistory.gradW1[epoch];
+  const g2 = trainingHistory.gradW2[epoch];
+  document.getElementById("lblGradW1").textContent = g1.toFixed(4);
+  document.getElementById("lblGradW2").textContent = g2.toFixed(4);
+
+  const maxG = Math.max(0.01, g1, g2);
+  document.getElementById("barGradW1").style.width = Math.min(100, (g1 / maxG) * 100) + "%";
+  document.getElementById("barGradW2").style.width = Math.min(100, (g2 / maxG) * 100) + "%";
+
+  renderLossChart(trainingHistory.loss, epoch);
+  renderDecisionBoundary(epoch);
 }
 
-function updateHiddenVal(val) {
-  document.getElementById("valHidden").textContent = val;
-}
+function renderLossChart(losses, currentEpoch) {
+  const svg = document.getElementById("svgLoss");
+  const w = svg.clientWidth || 300;
+  const h = svg.clientHeight || 70;
 
-// --- Training Loop ---
-function toggleTraining() {
-  isTraining = !isTraining;
-  const btn = document.getElementById("btnTrain");
-  const txt = document.getElementById("btnTrainText");
-  if (isTraining) {
-    btn.classList.add("playing");
-    txt.textContent = "Pause Training";
-    runTrainLoop();
-  } else {
-    btn.classList.remove("playing");
-    txt.textContent = "Train Network";
-    if (trainAnimFrame) cancelAnimationFrame(trainAnimFrame);
-  }
-}
-
-function stepSingleEpoch() {
-  trainOneEpoch();
-}
-
-function trainOneEpoch() {
-  const opt = document.getElementById("selOptimizer").value;
-  const fwd = net.forwardBatch(X_data, y_data);
-  const bwd = net.backwardBatch(X_data, y_data, fwd.caches);
-  net.applyGradients(bwd, opt);
-
-  currentEpoch++;
-  lossHistory.push(fwd.loss);
-  accHistory.push(fwd.accuracy);
-  gradW1History.push(bwd.normW1);
-  gradW2History.push(bwd.normW2);
-
-  if (lossHistory.length > 120) {
-    lossHistory.shift();
-    accHistory.shift();
-    gradW1History.shift();
-    gradW2History.shift();
-  }
-
-  updateUI(fwd.loss, fwd.accuracy, bwd.normW1, bwd.normW2);
-  drawDecisionBoundary();
-  updateMatrixTables();
-}
-
-function runTrainLoop() {
-  if (!isTraining) return;
-  // Train 2 epochs per animation frame for smooth high performance
-  trainOneEpoch();
-  trainOneEpoch();
-  trainAnimFrame = requestAnimationFrame(runTrainLoop);
-}
-
-// --- UI Updates ---
-function updateUI(loss, acc, norm1, norm2) {
-  document.getElementById("lblEpoch").textContent = "Epoch " + currentEpoch;
-  document.getElementById("valLoss").textContent = loss.toFixed(4);
-  document.getElementById("valAcc").textContent = (acc * 100).toFixed(1) + "%";
-  document.getElementById("valGrads").textContent = `‖dW1‖: ${norm1.toExponential(2)} · ‖dW2‖: ${norm2.toExponential(2)}`;
-
-  document.getElementById("barW1Val").textContent = norm1.toFixed(4);
-  document.getElementById("barW2Val").textContent = norm2.toFixed(4);
-
-  const maxNorm = Math.max(0.01, norm1, norm2);
-  document.getElementById("barW1").style.width = Math.min(100, (norm1 / maxNorm) * 100) + "%";
-  document.getElementById("barW2").style.width = Math.min(100, (norm2 / maxNorm) * 100) + "%";
-
-  renderMetricSvg("svgLoss", lossHistory, "#fbbf24");
-  renderMetricSvg("svgAcc", accHistory, "#34d399", 0, 1);
-}
-
-function renderMetricSvg(svgId, data, color, minVal = null, maxVal = null) {
-  const svg = document.getElementById(svgId);
-  if (!svg || data.length < 2) return;
-  const w = svg.clientWidth || 280;
-  const h = svg.clientHeight || 75;
-
-  let yMin = minVal !== null ? minVal : Math.min(...data);
-  let yMax = maxVal !== null ? maxVal : Math.max(...data);
-  if (yMax === yMin) yMax += 0.01;
+  const minL = Math.min(...losses);
+  const maxL = Math.max(...losses);
+  const range = (maxL - minL) || 1;
 
   let pts = [];
-  for (let i = 0; i < data.length; i++) {
-    const x = (i / (data.length - 1)) * w;
-    const y = h - ((data[i] - yMin) / (yMax - yMin)) * (h - 12) - 6;
+  for (let i = 0; i < losses.length; i++) {
+    const x = (i / (losses.length - 1)) * w;
+    const y = h - ((losses[i] - minL) / range) * (h - 14) - 7;
     pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
   }
 
+  const curX = (currentEpoch / (losses.length - 1)) * w;
+  const curY = h - ((losses[currentEpoch] - minL) / range) * (h - 14) - 7;
+
   svg.innerHTML = `
-    <polyline fill="none" stroke="${color}" stroke-width="2" points="${pts.join(' ')}" />
-    <circle cx="${pts[pts.length - 1].split(',')[0]}" cy="${pts[pts.length - 1].split(',')[1]}" r="3" fill="${color}" />
+    <polyline fill="none" stroke="#38bdf8" stroke-width="2" points="${pts.join(' ')}" />
+    <line x1="${curX}" y1="0" x2="${curX}" y2="${h}" stroke="#f43f5e" stroke-dasharray="3,3" stroke-width="1.2" />
+    <circle cx="${curX}" cy="${curY}" r="4" fill="#f43f5e" />
   `;
 }
 
-// --- 2D Decision Boundary Canvas Rendering ---
-const canvas = document.getElementById("decisionCanvas");
-const ctx = canvas.getContext("2d");
-
-function drawDecisionBoundary() {
+function renderDecisionBoundary(epoch) {
+  const canvas = document.getElementById("decisionCanvas");
+  const ctx = canvas.getContext("2d");
   const W = canvas.width;
   const H = canvas.height;
+
+  const W1 = trainingHistory.W1[epoch];
+  const b1 = trainingHistory.b1[epoch];
+  const W2 = trainingHistory.W2[epoch];
+  const b2 = trainingHistory.b2[epoch];
+  const act = document.getElementById("selAct").value === "relu" ? (z => Math.max(0, z)) : (z => Math.tanh(z));
+  const sigmoid = (z) => 1.0 / (1.0 + Math.exp(-Math.max(-500, Math.min(500, z))));
+
   const imgData = ctx.createImageData(W, H);
   const buf = imgData.data;
-
-  // Grid bounds normalized roughly [-2.2, 2.2]
   const scale = 4.4;
-  const step = 4; // render with 4px blocks for 60 FPS performance
+  const step = 4;
 
   for (let py = 0; py < H; py += step) {
     const yCoord = 2.2 - (py / H) * scale;
     for (let px = 0; px < W; px += step) {
       const xCoord = -2.2 + (px / W) * scale;
-      const prob = net.forwardSample(xCoord, yCoord).a2;
 
-      // Color interpolation: Class 0 (Cyan #38bdf8) to Class 1 (Rose #f43f5e)
+      let z2 = b2;
+      for (let j = 0; j < b1.length; j++) {
+        const z1 = xCoord * W1[0][j] + yCoord * W1[1][j] + b1[j];
+        z2 += act(z1) * W2[j][0];
+      }
+      const prob = sigmoid(z2);
+
       const r = Math.round(56 * (1 - prob) + 244 * prob);
       const g = Math.round(189 * (1 - prob) + 63 * prob);
       const b = Math.round(248 * (1 - prob) + 94 * prob);
@@ -1671,366 +894,220 @@ function drawDecisionBoundary() {
           buf[idx] = r;
           buf[idx + 1] = g;
           buf[idx + 2] = b;
-          buf[idx + 3] = 210;
+          buf[idx + 3] = 205;
         }
       }
     }
   }
   ctx.putImageData(imgData, 0, 0);
 
-  // Draw dataset scatter points
-  for (let i = 0; i < X_data.length; i++) {
-    const px = ((X_data[i][0] + 2.2) / scale) * W;
-    const py = ((2.2 - X_data[i][1]) / scale) * H;
+  // Scatter training points
+  const X = currentDataset.X;
+  const y = currentDataset.y;
+  for (let i = 0; i < X.length; i++) {
+    const px = ((X[i][0] + 2.2) / scale) * W;
+    const py = ((2.2 - X[i][1]) / scale) * H;
 
     ctx.beginPath();
     ctx.arc(px, py, 4, 0, 2 * Math.PI);
-    ctx.fillStyle = y_data[i] === 1 ? "#f43f5e" : "#38bdf8";
+    ctx.fillStyle = y[i] === 1 ? "#f43f5e" : "#38bdf8";
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1.2;
+    ctx.lineWidth = 1;
     ctx.fill();
     ctx.stroke();
   }
 }
 
-// Canvas Probe Coordinate Tool
-canvas.addEventListener("mousemove", (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const px = e.clientX - rect.left;
-  const py = e.clientY - rect.top;
-  const scale = 4.4;
-  const x = -2.2 + (px / rect.width) * scale;
-  const y = 2.2 - (py / rect.height) * scale;
-  const prob = net.forwardSample(x, y).a2;
+// =========================================================================
+// TAB 2: ANIMATED STEPPER LOGIC
+// =========================================================================
+const animX1 = 0.6, animX2 = 0.9, animYTrue = 1;
+const animLr = 0.5;
+let animW = { x1h1: 0.35, x1h2: -0.20, x2h1: 0.10, x2h2: 0.40, bh1: 0.05, bh2: -0.10, h1y: 0.50, h2y: -0.30, by: 0.05 };
+let animEpoch = 1;
+let animPhase = 0;
+let animCache = {};
+let isAutoPlaying = false;
+let autoPlayTimer = null;
 
-  document.getElementById("hudCoords").innerHTML =
-    `Probe: (x₁=${x.toFixed(2)}, x₂=${y.toFixed(2)}) → P(Class 1)=<span>${prob.toFixed(3)}</span> [Predicted: ${prob >= 0.5 ? 'Class 1' : 'Class 0'}]`;
-});
-
-// --- Dynamic Architecture SVG Graph Rendering ---
-function renderGraphSvg() {
-  const svg = document.getElementById("graphSvg");
-  if (!svg || !net) return;
-
-  const hidden = net.hiddenDim;
-  const W = 800;
-  const H = 450;
-  let html = `
-    <defs>
-      <radialGradient id="nodeGradIn" cx="30%" cy="30%" r="70%">
-        <stop offset="0%" stop-color="#38bdf8"/>
-        <stop offset="100%" stop-color="#0284c7"/>
-      </radialGradient>
-      <radialGradient id="nodeGradHid" cx="30%" cy="30%" r="70%">
-        <stop offset="0%" stop-color="#2dd4bf"/>
-        <stop offset="100%" stop-color="#0f766e"/>
-      </radialGradient>
-      <radialGradient id="nodeGradOut" cx="30%" cy="30%" r="70%">
-        <stop offset="0%" stop-color="#a855f7"/>
-        <stop offset="100%" stop-color="#7e22ce"/>
-      </radialGradient>
-    </defs>
-  `;
-
-  const xInput = 110;
-  const xHidden = 400;
-  const xOutput = 690;
-
-  const yIn = [H * 0.35, H * 0.65];
-  const yHid = [];
-  const spacing = Math.min(48, (H - 80) / hidden);
-  const startY = (H - (hidden - 1) * spacing) / 2;
-  for (let j = 0; j < hidden; j++) {
-    yHid.push(startY + j * spacing);
-  }
-  const yOut = H / 2;
-
-  // Synapses: Input to Hidden
-  for (let i = 0; i < 2; i++) {
-    for (let j = 0; j < hidden; j++) {
-      const w = net.W1[i][j];
-      const strokeCol = w >= 0 ? "#38bdf8" : "#f43f5e";
-      const strokeWidth = Math.min(6, Math.max(1, Math.abs(w) * 3));
-      html += `<line class="edge-line" id="edge-in-${i}-${j}" x1="${xInput}" y1="${yIn[i]}" x2="${xHidden}" y2="${yHid[j]}" stroke="${strokeCol}" stroke-width="${strokeWidth}" opacity="0.65" onclick="inspectSynapse('W1', ${i}, ${j})" />`;
-    }
-  }
-
-  // Synapses: Hidden to Output
-  for (let j = 0; j < hidden; j++) {
-    const w = net.W2[j][0];
-    const strokeCol = w >= 0 ? "#38bdf8" : "#f43f5e";
-    const strokeWidth = Math.min(6, Math.max(1, Math.abs(w) * 3));
-    html += `<line class="edge-line" id="edge-hid-${j}" x1="${xHidden}" y1="${yHid[j]}" x2="${xOutput}" y2="${yOut}" stroke="${strokeCol}" stroke-width="${strokeWidth}" opacity="0.75" onclick="inspectSynapse('W2', ${j}, 0)" />`;
-  }
-
-  // Nodes: Input
-  for (let i = 0; i < 2; i++) {
-    html += `
-      <circle class="node-circle" cx="${xInput}" cy="${yIn[i]}" r="20" fill="url(#nodeGradIn)" stroke="#38bdf8" stroke-width="1.5" onclick="inspectNode('input', ${i})" />
-      <text x="${xInput}" y="${yIn[i] + 5}" fill="#04121e" font-family="JetBrains Mono" font-weight="700" font-size="12" text-anchor="middle">x${i + 1}</text>
-    `;
-  }
-
-  // Nodes: Hidden
-  for (let j = 0; j < hidden; j++) {
-    html += `
-      <circle class="node-circle" id="node-hid-${j}" cx="${xHidden}" cy="${yHid[j]}" r="16" fill="url(#nodeGradHid)" stroke="#2dd4bf" stroke-width="1.5" onclick="inspectNode('hidden', ${j})" />
-      <text x="${xHidden}" y="${yHid[j] + 4}" fill="#04121e" font-family="JetBrains Mono" font-weight="700" font-size="10" text-anchor="middle">h${j + 1}</text>
-    `;
-  }
-
-  // Node: Output
-  html += `
-    <circle class="node-circle" id="node-out" cx="${xOutput}" cy="${yOut}" r="22" fill="url(#nodeGradOut)" stroke="#a855f7" stroke-width="2" onclick="inspectNode('output', 0)" />
-    <text x="${xOutput}" y="${yOut + 5}" fill="#ffffff" font-family="JetBrains Mono" font-weight="700" font-size="12" text-anchor="middle">ŷ</text>
-  `;
-
-  svg.innerHTML = html;
-}
-
-// Synapse Inspector
-function inspectSynapse(matrixName, r, c) {
-  const isW1 = matrixName === "W1";
-  const wVal = isW1 ? net.W1[r][c] : net.W2[r][c];
-
-  document.getElementById("inspectTitle").innerHTML = `Synapse: ${matrixName}[${r}, ${c}]`;
-  document.getElementById("inspectHint").textContent = `Live weight value and corresponding gradient backpropagated across this connection.`;
-
-  document.getElementById("insTarget").textContent = isW1 ? `x${r + 1} → h${c + 1}` : `h${r + 1} → ŷ`;
-  document.getElementById("insZ").textContent = `w = ${wVal.toFixed(4)}`;
-  document.getElementById("insA").textContent = `Magnitude: ${Math.abs(wVal).toFixed(4)}`;
-  document.getElementById("insB").textContent = wVal >= 0 ? "Excitatory (+)" : "Inhibitory (-)";
-  document.getElementById("insGrad").textContent = `∂L/∂w = ${((Math.random() - 0.5) * 0.05).toFixed(4)}`;
-
-  document.getElementById("insFormula").innerHTML = isW1
-    ? `∂L/∂W1[${r},${c}] = x_${r+1} · (δ2 · W2[${c}] · f'(z_h${c+1}))`
-    : `∂L/∂W2[${r}] = a_h${r+1} · (ŷ - y)`;
-}
-
-// Node Inspector
-function inspectNode(type, idx) {
-  if (type === "input") {
-    document.getElementById("inspectTitle").innerHTML = `Input Node: x${idx + 1}`;
-    document.getElementById("insTarget").textContent = `Feature coordinate x${idx + 1}`;
-    document.getElementById("insZ").textContent = `Input: 0.600`;
-    document.getElementById("insA").textContent = `Normalized`;
-    document.getElementById("insB").textContent = `No bias`;
-    document.getElementById("insGrad").textContent = `N/A`;
-    document.getElementById("insFormula").textContent = `Input feature vector fed to hidden layer.`;
-  } else if (type === "hidden") {
-    const fwd = net.forwardSample(0.6, 0.9);
-    document.getElementById("inspectTitle").innerHTML = `Hidden Neuron: h${idx + 1}`;
-    document.getElementById("insTarget").textContent = `Unit ${idx + 1} (${net.activationName})`;
-    document.getElementById("insZ").textContent = fwd.z1[idx].toFixed(4);
-    document.getElementById("insA").textContent = fwd.a1[idx].toFixed(4);
-    document.getElementById("insB").textContent = net.b1[idx].toFixed(4);
-    document.getElementById("insGrad").textContent = ((fwd.a2 - 1.0) * net.W2[idx][0]).toFixed(4);
-    document.getElementById("insFormula").innerHTML = `
-      z = (x₁·w₁ + x₂·w₂) + b<br>
-      a = ${net.activationName}(z)<br>
-      ∂L/∂z = (δ2 · W2) ⊙ ${net.activationName}'(z)
-    `;
-  } else {
-    const fwd = net.forwardSample(0.6, 0.9);
-    document.getElementById("inspectTitle").innerHTML = `Output Neuron: ŷ`;
-    document.getElementById("insTarget").textContent = `Sigmoid Probability`;
-    document.getElementById("insZ").textContent = fwd.z2.toFixed(4);
-    document.getElementById("insA").textContent = fwd.a2.toFixed(4);
-    document.getElementById("insB").textContent = net.b2.toFixed(4);
-    document.getElementById("insGrad").textContent = (fwd.a2 - 1.0).toFixed(4);
-    document.getElementById("insFormula").innerHTML = `
-      z = ∑ (a_i · W2_i) + b2<br>
-      ŷ = σ(z) = 1 / (1 + e^-z)<br>
-      ∂L/∂z = ŷ - y  (BCE + Sigmoid cancellation)
-    `;
-  }
-}
-
-// Signal flow pulse animation
-function animateSignal(direction) {
-  const lines = document.querySelectorAll(".edge-line");
-  const color = direction === "forward" ? "#38bdf8" : "#fbbf24";
-  lines.forEach((line, idx) => {
-    setTimeout(() => {
-      const origCol = line.getAttribute("stroke");
-      line.setAttribute("stroke", color);
-      line.setAttribute("stroke-width", "5");
-      setTimeout(() => {
-        line.setAttribute("stroke", origCol);
-        line.setAttribute("stroke-width", "2");
-      }, 350);
-    }, (idx % 8) * 40);
-  });
-}
-
-// --- Micro-Step Backpropagation Debugger ---
-const microSteps = [
-  {
-    title: "Step 1: Input to Hidden Linear Combination (Z1 = X · W1 + b1)",
-    desc: "The input vector is projected into the hidden feature subspace. Each hidden neuron computes an affine transformation (inner product plus bias).",
-    math: (net, s) => `Z1 = [${s.x1}, ${s.x2}] @ W1 + b1\nFor unit 1: z₁ = (${s.x1}·${net.W1[0][0].toFixed(3)}) + (${s.x2}·${net.W1[1][0].toFixed(3)}) + (${net.b1[0].toFixed(3)}) = ${(s.x1*net.W1[0][0] + s.x2*net.W1[1][0] + net.b1[0]).toFixed(3)}`
-  },
-  {
-    title: "Step 2: Non-Linear Activation (A1 = f(Z1))",
-    desc: `Non-linear activation enables the neural network to learn non-convex decision boundaries. Here we apply the ${net ? net.activationName : 'tanh'} function element-wise.`,
-    math: (net, s) => {
-      const z1 = s.x1*net.W1[0][0] + s.x2*net.W1[1][0] + net.b1[0];
-      const [act] = net.getActivation();
-      return `a₁ = ${net.activationName}(${z1.toFixed(3)}) = ${act(z1).toFixed(3)}`;
-    }
-  },
-  {
-    title: "Step 3: Output Projection & Binary Cross-Entropy Loss",
-    desc: "Hidden activations A1 are projected to the scalar output Z2 and transformed into a probability ŷ via the Sigmoid function. Binary Cross Entropy measures prediction error against target y.",
-    math: (net, s) => {
-      const fwd = net.forwardSample(s.x1, s.x2);
-      const loss = MathUtils.bceLoss(s.y, fwd.a2);
-      return `z₂ = ∑(a_i · W2_i) + b₂ = ${fwd.z2.toFixed(3)}\nŷ = σ(z₂) = ${fwd.a2.toFixed(3)}\nLoss = -[${s.y}·ln(${fwd.a2.toFixed(3)}) + ${(1-s.y)}·ln(${(1-fwd.a2).toFixed(3)})] = ${loss.toFixed(4)}`;
-    }
-  },
-  {
-    title: "Step 4: Output Layer Error Derivative (δ2 = ŷ - y)",
-    desc: "By combining the derivative of the BCE loss with the derivative of Sigmoid, the denominator factors cancel out, producing the elegant error signal δ2 = ŷ - y.",
-    math: (net, s) => {
-      const fwd = net.forwardSample(s.x1, s.x2);
-      const delta2 = fwd.a2 - s.y;
-      return `∂L/∂z₂ = δ₂ = ŷ - y = ${fwd.a2.toFixed(3)} - ${s.y} = ${delta2.toFixed(4)}\n∂L/∂W2 = A1ᵀ · δ₂\n∂L/∂b₂ = δ₂ = ${delta2.toFixed(4)}`;
-    }
-  },
-  {
-    title: "Step 5: Hidden Layer Backpropagation & Gradient Descent Step",
-    desc: "The error is propagated backward across W2 and scaled by the local derivative of the hidden activation. Finally, parameters update via: θ ← θ - η · ∇θ.",
-    math: (net, s) => {
-      const fwd = net.forwardSample(s.x1, s.x2);
-      const delta2 = fwd.a2 - s.y;
-      const [, actDeriv] = net.getActivation();
-      const dZ1_0 = (delta2 * net.W2[0][0]) * actDeriv(fwd.a1[0]);
-      return `δ₁_0 = (δ₂ · W2_0) · f'(z₁_0) = (${delta2.toFixed(3)} · ${net.W2[0][0].toFixed(3)}) · ${actDeriv(fwd.a1[0]).toFixed(3)} = ${dZ1_0.toFixed(4)}\nUpdate: W1_00 ← ${net.W1[0][0].toFixed(3)} - (${net.lr} · ${dZ1_0.toFixed(4)})`;
-    }
-  }
+const stepNames = [
+  "Initialize weights",
+  "Forward pass",
+  "Compute loss",
+  "Backward pass (chain rule)",
+  "Update weights"
 ];
 
-function updateMicroStepUI() {
-  const step = microSteps[microStepIndex];
-  document.getElementById("microTitle").textContent = step.title;
-  document.getElementById("microDesc").textContent = step.desc;
-  document.getElementById("microMath").textContent = step.math(net, microSample);
+function f(n) { return Number(n).toFixed(3); }
 
-  const pills = document.querySelectorAll("#microPipeline .step-pill");
-  pills.forEach((p, idx) => {
-    p.classList.remove("active", "completed");
-    if (idx === microStepIndex) p.classList.add("active");
-    else if (idx < microStepIndex) p.classList.add("completed");
-  });
-
-  const fwd = net.forwardSample(microSample.x1, microSample.x2);
-  document.getElementById("microTensorTable").innerHTML = `
-    Sample Input: [x1: ${microSample.x1}, x2: ${microSample.x2}], Target y: ${microSample.y}<br>
-    Z1[0..3]: [${fwd.z1.slice(0, 4).map(v => v.toFixed(3)).join(', ')}...]<br>
-    A1[0..3]: [${fwd.a1.slice(0, 4).map(v => v.toFixed(3)).join(', ')}...]<br>
-    Prediction ŷ: ${fwd.a2.toFixed(4)} | Loss: ${MathUtils.bceLoss(microSample.y, fwd.a2).toFixed(4)}
-  `;
-}
-
-function nextMicroStep() {
-  microStepIndex = (microStepIndex + 1) % microSteps.length;
-  updateMicroStepUI();
-}
-
-function prevMicroStep() {
-  microStepIndex = (microStepIndex - 1 + microSteps.length) % microSteps.length;
-  updateMicroStepUI();
-}
-
-function gotoMicroStep(i) {
-  microStepIndex = i;
-  updateMicroStepUI();
-}
-
-function resetMicroStep() {
-  microStepIndex = 0;
-  updateMicroStepUI();
-}
-
-// --- Matrix & Tensor Inspector Tables ---
-function updateMatrixTables() {
-  if (!net) return;
-  renderMatrixTable("tableW1", net.W1);
-  renderMatrixTable("tableW2", net.W2);
-
-  const fwd = net.forwardBatch(X_data, y_data);
-  const bwd = net.backwardBatch(X_data, y_data, fwd.caches);
-  renderMatrixTable("tableGradW1", bwd.dW1);
-  renderMatrixTable("tableGradW2", bwd.dW2);
-
-  document.getElementById("w1Shape").textContent = `Shape: (2, ${net.hiddenDim})`;
-  document.getElementById("w2Shape").textContent = `Shape: (${net.hiddenDim}, 1)`;
-}
-
-function renderMatrixTable(containerId, mat) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  let html = `<table class="matrix-table">`;
-  for (let i = 0; i < mat.length; i++) {
-    html += `<tr>`;
-    for (let j = 0; j < mat[i].length; j++) {
-      const val = mat[i][j];
-      const bg = val >= 0 ? `rgba(56, 189, 248, ${Math.min(0.7, Math.abs(val))})` : `rgba(244, 63, 94, ${Math.min(0.7, Math.abs(val))})`;
-      html += `<td style="background:${bg};">${val.toFixed(3)}</td>`;
-    }
-    html += `</tr>`;
+function drawAnimWeights() {
+  const map = {
+    "e-x1h1": animW.x1h1, "e-x1h2": animW.x1h2,
+    "e-x2h1": animW.x2h1, "e-x2h2": animW.x2h2,
+    "e-h1y": animW.h1y, "e-h2y": animW.h2y
+  };
+  for (const [id, val] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    el.setAttribute("stroke", val >= 0 ? "#38bdf8" : "#f43f5e");
+    el.setAttribute("stroke-width", Math.min(5, Math.max(1.5, Math.abs(val) * 4)));
+    document.getElementById("lbl-" + id.slice(2)).textContent = f(val);
   }
-  html += `</table>`;
-  el.innerHTML = html;
 }
 
-// --- Numerical Central Differences Verification ---
-function runNumericalGradCheck() {
-  const eps = 1e-6;
-  const fwd = net.forwardBatch(X_data.slice(0, 25), y_data.slice(0, 25));
-  const analytical = net.backwardBatch(X_data.slice(0, 25), y_data.slice(0, 25), fwd.caches);
-
-  // Check scalar W1[0][0]
-  const orig = net.W1[0][0];
-  net.W1[0][0] = orig + eps;
-  const lossPlus = net.forwardBatch(X_data.slice(0, 25), y_data.slice(0, 25)).loss;
-  net.W1[0][0] = orig - eps;
-  const lossMinus = net.forwardBatch(X_data.slice(0, 25), y_data.slice(0, 25)).loss;
-  net.W1[0][0] = orig;
-
-  const numGrad = (lossPlus - lossMinus) / (2 * eps);
-  const anaGrad = analytical.dW1[0][0];
-  const relError = Math.abs(anaGrad - numGrad) / (Math.abs(anaGrad) + Math.abs(numGrad) + 1e-15);
-
-  const badge = document.getElementById("gradCheckBadge");
-  badge.innerHTML = `<span class="dot"></span>Finite Diff: Exact (${relError.toExponential(2)})`;
-  alert(`Numerical Finite Difference Gradient Check PASSED!\n\nParameter: W1[0,0]\nAnalytical Gradient: ${anaGrad.toFixed(7)}\nNumerical Gradient:  ${numGrad.toFixed(7)}\nRelative Error:      ${relError.toExponential(2)}\n\nThis proves mathematical equivalence down to machine precision.`);
+function pulse(dotId, x1, y1, x2, y2, color, ms = 500) {
+  return new Promise(resolve => {
+    const dot = document.getElementById(dotId);
+    dot.setAttribute("fill", color);
+    dot.setAttribute("cx", x1);
+    dot.setAttribute("cy", y1);
+    dot.style.opacity = 1;
+    dot.style.transition = `cx ${ms}ms linear, cy ${ms}ms linear`;
+    requestAnimationFrame(() => {
+      dot.setAttribute("cx", x2);
+      dot.setAttribute("cy", y2);
+    });
+    setTimeout(() => { dot.style.opacity = 0; resolve(); }, ms + 40);
+  });
 }
 
-// --- Tab Switching ---
-function switchTab(tabId) {
-  document.querySelectorAll(".nav-tab-btn").forEach(b => b.classList.remove("active"));
-  document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+const coords = {
+  x1h1: [90,130,340,90], x1h2: [90,130,340,300],
+  x2h1: [90,270,340,90], x2h2: [90,270,340,300],
+  h1y:  [360,90,600,195], h2y:  [360,300,600,195]
+};
 
-  const targetTab = document.getElementById("tab-" + tabId);
-  if (targetTab) targetTab.classList.add("active");
-
-  const btn = Array.from(document.querySelectorAll(".nav-tab-btn")).find(b => b.textContent.toLowerCase().includes(tabId));
-  if (btn) btn.classList.add("active");
-
-  if (tabId === "graph") renderGraphSvg();
-  if (tabId === "matrices") updateMatrixTables();
-  if (tabId === "debugger") updateMicroStepUI();
+async function animForward() {
+  await Promise.all([
+    pulse("dot-x1h1", ...coords.x1h1, "#38bdf8"),
+    pulse("dot-x1h2", ...coords.x1h2, "#38bdf8"),
+    pulse("dot-x2h1", ...coords.x2h1, "#38bdf8"),
+    pulse("dot-x2h2", ...coords.x2h2, "#38bdf8")
+  ]);
+  await Promise.all([
+    pulse("dot-h1y", ...coords.h1y, "#38bdf8"),
+    pulse("dot-h2y", ...coords.h2y, "#38bdf8")
+  ]);
 }
 
-// Interview Accordion Toggle
-function toggleQA(headerEl) {
-  const item = headerEl.parentElement;
-  item.classList.toggle("open");
+async function animBackward() {
+  const rev = (c) => [c[2], c[3], c[0], c[1]];
+  await Promise.all([
+    pulse("dot-h1y", ...rev(coords.h1y), "#fbbf24"),
+    pulse("dot-h2y", ...rev(coords.h2y), "#fbbf24")
+  ]);
+  await Promise.all([
+    pulse("dot-x1h1", ...rev(coords.x1h1), "#fbbf24"),
+    pulse("dot-x1h2", ...rev(coords.x1h2), "#fbbf24"),
+    pulse("dot-x2h1", ...rev(coords.x2h1), "#fbbf24"),
+    pulse("dot-x2h2", ...rev(coords.x2h2), "#fbbf24")
+  ]);
 }
 
-// Run on window load
-window.addEventListener("DOMContentLoaded", init);
+async function renderAnimPhase() {
+  document.getElementById("btnNextStep").disabled = true;
+
+  // Pipeline badges
+  for (let i = 0; i < 5; i++) {
+    const el = document.getElementById("pipe-" + i);
+    el.classList.remove("active", "done");
+    if (i < animPhase) el.classList.add("done");
+    else if (i === animPhase) el.classList.add("active");
+  }
+
+  document.getElementById("animStepTitle").innerHTML = `Step <span>${animPhase + 1} / 5</span> — ${stepNames[animPhase]}`;
+  document.getElementById("lblAnimEpoch").textContent = animEpoch;
+
+  if (animPhase === 0) {
+    ["v-x1","v-x2","v-h1","v-h2","v-y"].forEach(id => document.getElementById(id).textContent = "");
+    document.getElementById("lossText").textContent = "";
+    drawAnimWeights();
+    document.getElementById("animStepBody").textContent =
+      `Weights initialized with small random values. Input x1 = ${animX1}, x2 = ${animX2} → Target y = ${animYTrue}.`;
+  } else if (animPhase === 1) {
+    const zh1 = animX1*animW.x1h1 + animX2*animW.x2h1 + animW.bh1;
+    const ah1 = Math.tanh(zh1);
+    const zh2 = animX1*animW.x1h2 + animX2*animW.x2h2 + animW.bh2;
+    const ah2 = Math.tanh(zh2);
+    const zy  = ah1*animW.h1y + ah2*animW.h2y + animW.by;
+    const ay  = 1 / (1 + Math.exp(-zy));
+    animCache = { zh1, ah1, zh2, ah2, zy, ay };
+
+    document.getElementById("v-x1").textContent = animX1;
+    document.getElementById("v-x2").textContent = animX2;
+    await animForward();
+    document.getElementById("v-h1").textContent = f(ah1);
+    document.getElementById("v-h2").textContent = f(ah2);
+    document.getElementById("v-y").textContent = f(ay);
+
+    document.getElementById("animStepBody").textContent =
+      `h1 = tanh(${f(zh1)}) = ${f(ah1)}   |   h2 = tanh(${f(zh2)}) = ${f(ah2)}   |   ŷ = sigmoid(${f(zy)}) = ${f(ay)}.`;
+  } else if (animPhase === 2) {
+    const ay = Math.max(1e-8, Math.min(1 - 1e-8, animCache.ay));
+    animCache.loss = -(animYTrue * Math.log(ay) + (1 - animYTrue) * Math.log(1 - ay));
+    document.getElementById("lossText").textContent = "loss = " + f(animCache.loss);
+    document.getElementById("animStepBody").textContent =
+      `Binary cross-entropy loss = ${f(animCache.loss)}. Backpropagation will now compute gradients to reduce this loss.`;
+  } else if (animPhase === 3) {
+    await animBackward();
+    const dZy = animCache.ay - animYTrue;
+    const dWh1y = animCache.ah1 * dZy;
+    const dWh2y = animCache.ah2 * dZy;
+    const dBy = dZy;
+    const dZh1 = (dZy * animW.h1y) * (1 - animCache.ah1**2);
+    const dZh2 = (dZy * animW.h2y) * (1 - animCache.ah2**2);
+    const dWx1h1 = animX1 * dZh1, dWx2h1 = animX2 * dZh1, dBh1 = dZh1;
+    const dWx1h2 = animX1 * dZh2, dWx2h2 = animX2 * dZh2, dBh2 = dZh2;
+    animCache.grads = { dWh1y, dWh2y, dBy, dWx1h1, dWx2h1, dBh1, dWx1h2, dWx2h2, dBh2 };
+
+    document.getElementById("animStepBody").textContent =
+      `Chain rule gradients: dW_h1y = ${f(dWh1y)}, dW_h2y = ${f(dWh2y)}, dW_x1h1 = ${f(dWx1h1)}, dW_x2h2 = ${f(dWx2h2)}.`;
+  } else if (animPhase === 4) {
+    const g = animCache.grads;
+    animW.h1y -= animLr * g.dWh1y; animW.h2y -= animLr * g.dWh2y; animW.by -= animLr * g.dBy;
+    animW.x1h1 -= animLr * g.dWx1h1; animW.x2h1 -= animLr * g.dWx2h1; animW.bh1 -= animLr * g.dBh1;
+    animW.x1h2 -= animLr * g.dWx1h2; animW.x2h2 -= animLr * g.dWx2h2; animW.bh2 -= animLr * g.dBh2;
+    drawAnimWeights();
+
+    document.getElementById("animStepBody").textContent =
+      `Weights updated: θ ← θ - η · ∇θ. Click "Next Step" to proceed to epoch ${animEpoch + 1}.`;
+  }
+
+  document.getElementById("btnNextStep").disabled = false;
+}
+
+function nextAnimStep() {
+  animPhase++;
+  if (animPhase > 4) { animPhase = 1; animEpoch++; }
+  renderAnimPhase();
+}
+
+function toggleAutoPlay() {
+  isAutoPlaying = !isAutoPlaying;
+  const btn = document.getElementById("btnAutoPlay");
+  btn.textContent = isAutoPlaying ? "Pause" : "Auto-Play";
+  btn.classList.toggle("btn-playing", isAutoPlaying);
+
+  if (isAutoPlaying) {
+    autoPlayTimer = setInterval(() => {
+      nextAnimStep();
+    }, 1500);
+  } else {
+    clearInterval(autoPlayTimer);
+  }
+}
+
+function resetAnim() {
+  animW = { x1h1: 0.35, x1h2: -0.20, x2h1: 0.10, x2h2: 0.40, bh1: 0.05, bh2: -0.10, h1y: 0.50, h2y: -0.30, by: 0.05 };
+  animEpoch = 1; animPhase = 0;
+  if (isAutoPlaying) toggleAutoPlay();
+  renderAnimPhase();
+}
+
+// Initial Boot
+window.addEventListener("DOMContentLoaded", () => {
+  resetAndTrain();
+  renderAnimPhase();
+});
 </script>
 </body>
 </html>
